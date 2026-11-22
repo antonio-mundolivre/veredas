@@ -122,7 +122,7 @@ function renderTabs() {
     t.className = "tab" + (it.id === activeId ? " active" : "");
     t.draggable = true;
     t.title = "Arraste para mudar a ordem (ou Alt + ← →)";
-    const label = btn(itemRef(it), "tl", () => { setActive(it.id); Pager.reveal(els.get(it.id)); }, "Mostrar este trecho");
+    const label = btn(itemRef(it), "tl", () => { setActive(it.id); const el = els.get(it.id); if (document.body.dataset.view === "single") Pager.reset(); else Pager.reveal(el); }, "Mostrar este trecho");
     label.onkeydown = e => {
       if (e.altKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
         e.preventDefault();

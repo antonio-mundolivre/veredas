@@ -110,3 +110,5 @@ body.tall .finder { max-height: 74vh; }
   .tab.active .mv { display: inline-block; }
   .tab .mv:disabled { opacity: .3; }
 }
+.cardtop { break-after: avoid; }
+.cardtop .kicker { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

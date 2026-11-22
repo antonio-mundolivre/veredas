@@ -107,8 +107,11 @@
       nav.prepend(b);
       // no celular, a barra de ajustes fica recolhida
       const tb = document.querySelector(".toolbar");
+      const more = document.createElement("div"); more.className = "tbmore";   // ajustes: no celular abrem por cima do texto, sem mexer no layout
+      [...tb.children].forEach(c => { if (c !== nav && !c.classList.contains("brand")) more.append(c); });
+      tb.append(more);
       const t = document.createElement("button"); t.className = "tbToggle"; t.textContent = "Aa ▾"; t.setAttribute("aria-label", "Ajustes de leitura");
-      t.onclick = () => { const o = tb.classList.toggle("open"); t.textContent = o ? "Aa ▴" : "Aa ▾"; setTimeout(() => window.Pager && Pager.layout(), 50); };
+      t.onclick = () => { const o = tb.classList.toggle("open"); t.textContent = o ? "Aa ▴" : "Aa ▾"; };
       tb.append(t);
     }
     if (page === "options.html") {

@@ -52,7 +52,15 @@ const Pager = (() => {
     main.style.columnGap = GAP + "px";
     main.style.columnWidth = (W - 0.5) + "px";
     step = W + GAP;
-    pages = Math.max(1, Math.round((main.scrollWidth + GAP) / step));
+    // conta as páginas pelo que realmente está desenhado (o scrollWidth pode vir velho no Safari do iPhone)
+    main.scrollLeft = 0;
+    let wide = main.scrollWidth;
+    try {
+      const rg = document.createRange(); rg.selectNodeContents(main);
+      const rr = rg.getBoundingClientRect();
+      if (rr.width > 0) wide = Math.min(wide, Math.ceil(rr.right - main.getBoundingClientRect().left));
+    } catch (e) { /* usa o scrollWidth */ }
+    pages = Math.max(1, Math.round((wide + GAP) / step));
     let p = page;
     if (anchor) { const q = pageOf(anchor); if (q !== null) p = q; }
     goTo(p);
@@ -68,6 +76,7 @@ const Pager = (() => {
     layoutNow();
     const p = pageOf(e);
     if (p !== null) goTo(p);
+    setTimeout(() => { layoutNow(); const q = pageOf(e); if (q !== null) goTo(q); }, 150);   // segunda passada, quando o navegador já assentou o layout
   }
   function reset() { page = 0; layoutNow(false); goTo(0); }
 
