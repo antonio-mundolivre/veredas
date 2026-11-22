@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Veredas">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#7a5c2e">
+<link rel="apple-touch-icon" href="icons/app-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+
+  <meta charset="UTF-8">
+  <title>Veredas · Passagens</title>
+  <link rel="stylesheet" href="reader.css">
+  <link rel="stylesheet" href="culto.css">
+<link rel="stylesheet" href="web.css">
+</head>
+<body data-mode="lines">
+  <div class="toolbar">
+    <span class="brand"><img class="logo" src="icons/icon16.png" alt="">Veredas</span>
+    <div class="group nav"><button id="goReader">Plano</button><button class="active" disabled>Passagens</button></div>
+    <div class="group">
+      <button id="sizeDown" title="Diminuir letra">A−</button>
+      <button id="sizeUp" title="Aumentar letra">A+</button>
+    </div>
+    <div class="group">
+      <button data-theme-btn="light">Claro</button>
+      <button data-theme-btn="sepia">Sépia</button>
+      <button data-theme-btn="dark">Escuro</button>
+    </div>
+    <label>Versão <select id="version"></select></label>
+    <span id="offbadge" class="badge"></span>
+    <div class="group align" id="alignGroup"></div>
+    <label>Largura
+      <select id="width">
+        <option value="26">Estreita</option>
+        <option value="32">Média</option>
+        <option value="40">Larga</option>
+      </select>
+    </label>
+    <label>Layout
+      <select id="mode">
+        <option value="lines">Um versículo por linha</option>
+        <option value="flow">Texto corrido</option>
+      </select>
+    </label>
+    <label class="inl"><input type="checkbox" id="allView"> Ver todos juntos</label>
+  </div>
+
+  <div class="finder">
+    <div class="qline">
+      <input id="q" autocomplete="off" spellcheck="false"
+             placeholder="Digite a passagem e Enter — ex.: jo 1:2-4 · sl 23 · 1co 13:4-7">
+      <button id="booksBtn" class="ib" aria-label="Nova passagem: escolher o livro" title="Nova passagem (escolher livro e capítulo)"></button>
+      <button id="newBtn" class="ib" aria-label="Novo" title="Novo: começar uma lista vazia (dá para desfazer)"></button>
+      <button id="saveBtn" class="ib" aria-label="Guardar" title="Guardar estas passagens"></button>
+      <button id="readBtn" class="ib" aria-label="Abrir" title="Abrir passagens guardadas"></button>
+    </div>
+    <div id="qmsg" class="qmsg"></div>
+    <div id="tabs" class="tabs"></div>
+    <div id="panel" class="panel" hidden></div>
+  </div>
+
+  <div id="picker" class="pickov" hidden></div>
+
+  <div id="pager"><main id="content"></main></div>
+
+  <div class="pagebar">
+    <button id="prev">‹ Anterior</button>
+    <div class="mid"><div id="pageinfo"></div><div id="credit" class="credit"></div></div>
+    <button id="next">Próxima ›</button>
+  </div>
+
+  <script src="web-shim.js"></script>
+  <script src="bible-data.js"></script>
+  <script src="state.js"></script>
+  <script src="source.js"></script>
+  <script src="pager.js"></script>
+  <script src="culto.js"></script>
+</body>
+</html>
