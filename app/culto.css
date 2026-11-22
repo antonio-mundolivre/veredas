@@ -112,3 +112,6 @@ body.tall .finder { max-height: 74vh; }
 }
 .cardtop { break-after: avoid; }
 .cardtop .kicker { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+/* uma passagem por vez: o cartão escondido não pode forçar quebra de coluna (deixava a página em branco no Safari) */
+body[data-view="single"] .chapter + .chapter { break-before: auto; }
