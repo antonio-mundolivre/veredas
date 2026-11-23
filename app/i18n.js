@@ -32,8 +32,12 @@ const I18N = (() => {
   }
   async function init() {
     try {
-      const r = await chrome.storage.local.get("lang");
-      if (r.lang && dicts[r.lang]) lang = r.lang;
+      let saved = null;
+      try { saved = localStorage.getItem("veredas.lang"); } catch (e) { /* sem localStorage */ }   // cópia síncrona: vale mesmo se o armazenamento falhar
+      let r = {};
+      try { r = await chrome.storage.local.get("lang"); } catch (e) { /* usa a cópia */ }
+      const want = (saved && dicts[saved]) ? saved : r.lang;
+      if (want && dicts[want]) lang = want;
       else {   // primeira vez: usa o idioma do navegador, se houver tradução; senão, português
         const nav = ((chrome.i18n && chrome.i18n.getUILanguage && chrome.i18n.getUILanguage()) || navigator.language || "pt").slice(0, 2).toLowerCase();
         if (dicts[nav]) lang = nav;
@@ -65,6 +69,7 @@ const I18N = (() => {
     async set(l) {
       if (!dicts[l]) return;
       lang = l;
+      try { localStorage.setItem("veredas.lang", l); } catch (e) { /* sem localStorage */ }
       for (let i = 0; i < 3; i++) {   // confere se a gravação valeu (no Safari/iOS já falhou sem avisar)
         try { await chrome.storage.local.set({ lang: l }); const r = await chrome.storage.local.get("lang"); if (r.lang === l) break; } catch (e) { /* tenta de novo */ }
       }

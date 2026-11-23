@@ -3,20 +3,30 @@
   if (window.chrome && chrome.storage && chrome.runtime && chrome.runtime.id) return; // dentro da extensão: não faz nada
   const DB = "veredas", ST = "kv";
   let dbp;
+  // a conexão com o IndexedDB pode falhar ou ser fechada pelo iOS (ao voltar de segundo plano, por exemplo): recomeça do zero
   const db = () => dbp || (dbp = new Promise((ok, no) => {
     const r = indexedDB.open(DB, 1);
     r.onupgradeneeded = () => r.result.createObjectStore(ST);
-    r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+    r.onsuccess = () => { const d = r.result; d.onclose = d.onversionchange = () => { dbp = null; try { d.close(); } catch (e) {} }; ok(d); };
+    r.onerror = () => { dbp = null; no(r.error); };
+    r.onblocked = () => { dbp = null; };
   }));
   // fn só pode usar a transação de forma síncrona (sem await dentro dela): no Safari/iOS a transação fecha sozinha
   // quando o código espera por uma Promise, e o put seguinte falha sem avisar (a gravação se perdia de vez em quando).
-  const tx = async (mode, fn) => {
+  const tx1 = async (mode, fn) => {
     const d = await db();
     return new Promise((ok, no) => {
-      const t = d.transaction(ST, mode), s = t.objectStore(ST); let out, err;
+      let t, s, out, err;
+      try { t = d.transaction(ST, mode); s = t.objectStore(ST); } catch (e) { dbp = null; no(e); return; }
       try { out = fn(s); } catch (e) { err = e; try { t.abort(); } catch (x) {} }
       t.oncomplete = () => ok(out); t.onerror = t.onabort = () => no(err || t.error);
     });
+  };
+  const tx = async (mode, fn) => {
+    for (let i = 0; ; i++) {
+      try { return await tx1(mode, fn); }
+      catch (e) { if (i >= 2) throw e; dbp = null; await new Promise(r => setTimeout(r, 120 * (i + 1))); }   // tenta de novo (2x)
+    }
   };
   const req = r => new Promise((ok, no) => { r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
   const listeners = new Set();
@@ -67,7 +77,7 @@
   }
   const local = area("l:"), sync = area("s:");
   const noWin = () => Promise.reject(new Error("sem janelas na web"));
-  const manifest = { version: "2.9", name: "Veredas" };
+  const manifest = { version: "3.0", name: "Veredas" };
   window.chrome = {
     storage: { local, sync, onChanged: { addListener: f => listeners.add(f), removeListener: f => listeners.delete(f) } },
     runtime: {
