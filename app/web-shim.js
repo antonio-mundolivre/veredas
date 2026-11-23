@@ -8,12 +8,14 @@
     r.onupgradeneeded = () => r.result.createObjectStore(ST);
     r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
   }));
+  // fn só pode usar a transação de forma síncrona (sem await dentro dela): no Safari/iOS a transação fecha sozinha
+  // quando o código espera por uma Promise, e o put seguinte falha sem avisar (a gravação se perdia de vez em quando).
   const tx = async (mode, fn) => {
     const d = await db();
     return new Promise((ok, no) => {
-      const t = d.transaction(ST, mode), s = t.objectStore(ST); let out;
-      Promise.resolve(fn(s)).then(v => { out = v; });
-      t.oncomplete = () => ok(out); t.onerror = t.onabort = () => no(t.error);
+      const t = d.transaction(ST, mode), s = t.objectStore(ST); let out, err;
+      try { out = fn(s); } catch (e) { err = e; try { t.abort(); } catch (x) {} }
+      t.oncomplete = () => ok(out); t.onerror = t.onabort = () => no(err || t.error);
     });
   };
   const req = r => new Promise((ok, no) => { r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
@@ -24,44 +26,37 @@
 
   function area(prefix) {
     const K = k => prefix + k;
-    const allKeys = async s => (await req(s.getAllKeys())).filter(k => String(k).startsWith(prefix));
+    const keysOf = () => tx("readonly", s => req(s.getAllKeys())).then(ks => ks.filter(k => String(k).startsWith(prefix)));
+    const getMany = async list => {   // leitura: pedidos em paralelo dentro de uma única transação
+      const rs = await tx("readonly", s => Promise.all(list.map(k => req(s.get(K(k))))));
+      return rs;
+    };
     return {
       async get(keys) {
-        return tx("readonly", async s => {
-          const out = {};
-          let list, defs = {};
-          if (keys == null) list = (await allKeys(s)).map(k => k.slice(prefix.length));
-          else if (typeof keys === "string") list = [keys];
-          else if (Array.isArray(keys)) list = keys;
-          else { defs = keys; list = Object.keys(keys); }
-          for (const k of list) {
-            const v = await req(s.get(K(k)));
-            if (v !== undefined) out[k] = v; else if (k in defs) out[k] = defs[k];
-          }
-          return out;
-        });
+        let list, defs = {};
+        if (keys == null) list = (await keysOf()).map(k => k.slice(prefix.length));
+        else if (typeof keys === "string") list = [keys];
+        else if (Array.isArray(keys)) list = keys;
+        else { defs = keys; list = Object.keys(keys); }
+        const vals = await getMany(list), out = {};
+        list.forEach((k, i) => { if (vals[i] !== undefined) out[k] = vals[i]; else if (k in defs) out[k] = defs[k]; });
+        return out;
       },
       async set(obj) {
-        const ch = {};
-        await tx("readwrite", async s => {
-          for (const [k, v] of Object.entries(obj)) {
-            const old = await req(s.get(K(k)));
-            s.put(v === undefined ? null : v, K(k));
-            ch[k] = { oldValue: old, newValue: v };
-          }
-        });
+        const ks = Object.keys(obj), olds = await getMany(ks), ch = {};
+        await tx("readwrite", s => { ks.forEach(k => s.put(obj[k] === undefined ? null : obj[k], K(k))); });
+        ks.forEach((k, i) => { ch[k] = { oldValue: olds[i], newValue: obj[k] }; });
         fire(ch); bc && bc.postMessage(ch);
       },
       async remove(keys) {
-        const list = Array.isArray(keys) ? keys : [keys], ch = {};
-        await tx("readwrite", async s => {
-          for (const k of list) { const old = await req(s.get(K(k))); if (old !== undefined) ch[k] = { oldValue: old }; s.delete(K(k)); }
-        });
+        const list = Array.isArray(keys) ? keys : [keys], ch = {}, olds = await getMany(list);
+        await tx("readwrite", s => { list.forEach(k => s.delete(K(k))); });
+        list.forEach((k, i) => { if (olds[i] !== undefined) ch[k] = { oldValue: olds[i] }; });
         fire(ch); bc && bc.postMessage(ch);
       },
       async clear() {
-        const ch = {};
-        await tx("readwrite", async s => { for (const k of await allKeys(s)) { ch[k.slice(prefix.length)] = {}; s.delete(k); } });
+        const ks = await keysOf(), ch = {};
+        await tx("readwrite", s => { ks.forEach(k => { ch[k.slice(prefix.length)] = {}; s.delete(k); }); });
         fire(ch); bc && bc.postMessage(ch);
       },
       async getBytesInUse(keys) {
@@ -72,7 +67,7 @@
   }
   const local = area("l:"), sync = area("s:");
   const noWin = () => Promise.reject(new Error("sem janelas na web"));
-  const manifest = { version: "2.8", name: "Veredas" };
+  const manifest = { version: "2.9", name: "Veredas" };
   window.chrome = {
     storage: { local, sync, onChanged: { addListener: f => listeners.add(f), removeListener: f => listeners.delete(f) } },
     runtime: {

@@ -62,7 +62,14 @@ const I18N = (() => {
   return {
     add, t, rich, apply, ready, applyBooks, abbr,
     get lang() { return lang; }, get locale() { return LOCALES[lang] || lang; }, languages: () => Object.keys(dicts),
-    async set(l) { if (!dicts[l]) return; lang = l; await chrome.storage.local.set({ lang: l }); applyBooks(); sortVersions(); }
+    async set(l) {
+      if (!dicts[l]) return;
+      lang = l;
+      for (let i = 0; i < 3; i++) {   // confere se a gravação valeu (no Safari/iOS já falhou sem avisar)
+        try { await chrome.storage.local.set({ lang: l }); const r = await chrome.storage.local.get("lang"); if (r.lang === l) break; } catch (e) { /* tenta de novo */ }
+      }
+      applyBooks(); sortVersions();
+    }
   };
 })();
 const t = I18N.t;
