@@ -187,7 +187,7 @@ function clampItem(it, d) {
 async function loadCard(it) {
   const ver = version;
   errs.delete(it.id);
-  try { clampItem(it, await ensureData(it, ver)); }
+  try { clampItem(it, await ensureData(it, ver)); await Selah.ready; }
   catch (e) { errs.set(it.id, e); }
   if (ver !== version || !items.includes(it)) return;
   redrawCard(it.id);
@@ -259,7 +259,7 @@ function renderCard(it) {
       const n = document.createElement("span");
       n.className = "n";
       n.textContent = v.n;
-      sp.append(n, " ", document.createTextNode(v.text), " ");
+      Selah.fill(sp, n, v, version.id + "|g" + gIndex(it.book, it.chapter));
       wrap.append(sp);
       if (inR && !firstHl) firstHl = sp;
     });

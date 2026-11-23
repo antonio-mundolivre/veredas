@@ -75,3 +75,11 @@ body[data-mode="flow"] .v.brk::after { content: ""; display: block; height: .7em
 .nav button.active:disabled { opacity: 1; cursor: default; }
 
 body[data-align="justify"][data-mode="lines"] .v { text-align-last: left; }
+
+/* pausa para meditação (Selá) */
+.selah {
+  font-family: "SBL Hebrew", "Ezra SIL", "Times New Roman", serif; font-size: .95em; white-space: nowrap;
+  direction: rtl; unicode-bidi: isolate; color: var(--accent); margin: 0 .3em; padding: 0 .3em;
+  background: color-mix(in srgb, var(--accent) 14%, transparent); border-radius: 4px; cursor: pointer; user-select: none;
+}
+@media (pointer: coarse) { .vt { cursor: pointer; -webkit-tap-highlight-color: transparent; } }

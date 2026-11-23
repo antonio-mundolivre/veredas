@@ -503,6 +503,10 @@ async function initGeneral() {
     }
   };
 
+  $("clearSelah").onclick = async () => {
+    if (!confirm("Apagar todas as pausas (Selá) marcadas?")) return;
+    await Selah.clearAll(); setStatus("Pausas apagadas ✓");
+  };
   $("resetAll").onclick = async () => {
     if (!confirm("Zerar o progresso de todas as trilhas?")) return;
     [draft.main, ...draft.secTracks].forEach(t => { t.pos = 0; t.cycles = 0; t.history = []; t.todayDone = 0; });

@@ -85,6 +85,7 @@ async function loadSection(sec) {
   { const p = document.createElement("p"); p.className = "status"; p.textContent = "Carregando…"; sec.body.replaceChildren(p); }
   try {
     const { verses, source } = await fetchVerses(CHAPTERS[sec.i], version);
+    await Selah.ready;
     renderVerses(sec, verses);
     sec.src = source;
     decorate(sec);
@@ -107,7 +108,7 @@ function renderVerses(sec, verses) {
     const n = document.createElement("span");
     n.className = "n";
     n.textContent = v.n;
-    sp.append(n, " ", document.createTextNode(v.text), " ");
+    Selah.fill(sp, n, v, version.id + "|g" + sec.i);
     wrap.append(sp);
   }
   sec.body.replaceChildren(wrap);
