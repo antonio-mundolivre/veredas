@@ -23,23 +23,35 @@
   <p class="lead" data-orich="options.lead">Seu plano tem uma <b>trilha principal</b> (a leitura sequencial, em geral a Bíblia toda) e, se quiser, uma <b>trilha secundária</b> (por exemplo, Salmos e Provérbios todos os dias).
     O capítulo de hoje é sempre o próximo que falta, sem cobrança por dias perdidos.</p>
 
-  <section>
+  <nav class="tabs" id="tabs" role="tablist">
+    <button role="tab" data-go="plano" data-i18n="options.tabPlan">Plano</button>
+    <button role="tab" data-go="biblias" data-i18n="options.tabBibles">Bíblias</button>
+    <button role="tab" data-go="geral" data-i18n="options.tabGeneral">Geral</button>
+    <button role="tab" data-go="sobre" data-i18n="options.tabAbout">Sobre</button>
+  </nav>
+
+  <section data-tab="plano">
     <h2 data-i18n="options.templatesTitle">Modelos prontos</h2>
     <p class="hint" data-i18n="options.templatesHint">Escolha um modelo como ponto de partida e ajuste abaixo. As alterações são salvas automaticamente.</p>
     <div id="templates" class="grid"></div>
   </section>
 
-  <section id="mainSection">
+  <section id="mainSection" data-tab="plano">
     <h2 data-i18n="options.mainTitle">1. Trilha principal</h2>
     <div id="main"></div>
   </section>
 
-  <section id="secSection">
+  <section id="secSection" data-tab="plano">
     <h2 data-i18n="options.secTitle">2. Trilha secundária (opcional)</h2>
     <div id="sec"></div>
   </section>
 
-  <section id="offlineSection">
+  <section data-tab="biblias">
+    <h2 data-i18n="options.generalVersion">Versão da Bíblia</h2>
+    <label class="field"><select id="gversion"></select></label>
+  </section>
+
+  <section id="offlineSection" data-tab="biblias">
     <h2 data-i18n="options.offTitle">Textos offline</h2>
     <p class="hint" data-orich="options.offHint1">Baixe as versões que você usa para ler <b>sem internet</b> (cerca de 4 a 5 MB cada). Para usar sem conexão (no culto, por exemplo), o ideal é baixar antes e marcar “somente textos baixados”. </p>
     <p class="hint notice" data-orich="options.offHint2"><b>Bíblia Livre (BLIVRE)</b> já vem na extensão, com licença que permite uso e redistribuição. As demais versões marcadas como <i>texto de terceiros</i> <b>não são distribuídas pelo Veredas</b>: o download é feito por você, direto de um repositório público do GitHub mantido por terceiros, que o Veredas não controla. O direito de uso desses textos pode pertencer às editoras; baixe e use somente o que você tem direito de usar.</p>
@@ -53,14 +65,11 @@
     <p id="offMsg" class="hint"></p>
   </section>
 
-  <section>
+  <section data-tab="geral">
     <h2 data-i18n="options.generalTitle">Geral</h2>
-    <label class="field"><span data-i18n="options.langLabel">Idioma / Language</span>
-      <select id="glang"></select>
-    </label>
-    <label class="field"><span data-i18n="options.generalVersion">Versão da Bíblia</span>
-      <select id="gversion"></select>
-    </label>
+    <div class="field wide"><span id="glangLabel" data-i18n="options.langLabel">Idioma / Language</span>
+      <div id="glang" class="langs" role="radiogroup" aria-labelledby="glangLabel"></div>
+    </div>
     <label class="inl"><input type="checkbox" id="sync"> <span data-i18n="options.syncLabel">Sincronizar o plano entre computadores (usa a conta do navegador)</span></label>
     <p class="hint" data-i18n="options.syncHint">Com a sincronização ligada, o plano e o progresso acompanham a conta do seu navegador (Chrome ou Firefox) em qualquer computador onde a extensão estiver instalada.</p>
     <button id="resetAll" class="danger" data-i18n="options.resetAll">Zerar o progresso de todas as trilhas</button>
@@ -69,11 +78,12 @@
     <button id="clearSelah" class="danger" data-i18n="options.selahClear">Apagar todas as pausas</button>
   </section>
 
-  <section id="about">
+  <section id="about" data-tab="sobre">
     <h2 data-i18n="options.aboutTitle">Sobre e créditos</h2>
     <p class="hint" data-i18n="options.aboutP1">Veredas — plano de leitura bíblica, leitor limpo e passagens avulsas. Todos os dados (plano, progresso e textos baixados) ficam somente neste navegador; nada é enviado a servidores do Veredas.</p>
     <p class="hint" data-orich="options.aboutP2"><b>Bíblia Livre (BLIVRE)</b>, Almeida 1819 revisada em 2018, por Diego Santos, Mario Sérgio e Marco Teles, licença <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">Creative Commons Atribuição 4.0</a>. Obra original: sites.google.com/site/biblialivre (fevereiro de 2018), edição Textus Receptus; arquivo obtido em ebible.org/porbr2018. O texto foi convertido para o formato interno do Veredas (versículos sem numeração e sem marcação), sem alteração do conteúdo.</p>
     <p class="hint" data-orich="options.aboutP3"><b>World English Bible (WEB)</b>, domínio público.</p>
+    <p class="hint" data-orich="options.aboutP4"></p>
   </section>
 
   <div class="savebar">
@@ -88,6 +98,8 @@
   <script src="lang/pt.js"></script>
   <script src="lang/en.js"></script>
   <script src="lang/es.js"></script>
+  <script src="lang/fr.js"></script>
+  <script src="lang/de.js"></script>
 <script src="state.js"></script>
 <script src="source.js"></script>
 <script src="selah.js"></script>

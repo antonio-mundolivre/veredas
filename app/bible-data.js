@@ -37,6 +37,10 @@ const VERSIONS = [
     credit: "World English Bible (WEB) — Public Domain. “World English Bible” is a trademark of eBible.org — ebible.org/web" }, // @web
   { id: "rvg", lang: "es", short: "RVG", label: "RVG – Santa Biblia Reina Valera Gómez", bundled: true, // @rvg
     credit: "Santa Biblia Reina Valera Gómez (RVG) — Copyright © 2004, 2010, 2023 Dr. Humberto Gómez Caballero — ebible.org/find/details.php?id=sparvg — Prohibido reproducirla con fines de lucro; distribución gratuita permitida sin cambiar ninguna palabra." }, // @rvg
+  { id: "lsg", lang: "fr", short: "LSG", label: "LSG – Louis Segond 1910", bundled: true, // @lsg
+    credit: "Louis Segond 1910 (LSG) — Domaine public — ebible.org/find/details.php?id=fraLSG" }, // @lsg
+  { id: "l1912", lang: "de", short: "L1912", label: "L1912 – Lutherbibel 1912", bundled: true, // @l1912
+    credit: "Lutherbibel 1912 — Gemeinfrei (Public Domain) — ebible.org/find/details.php?id=deu1912" }, // @l1912
   { id: "bkj", lang: "pt",  short: "BKJ",  label: "BKJ – Bíblia King James Fiel",              json: "kja", third: true },
   { id: "acf", lang: "pt",  short: "ACF",  label: "ACF – Almeida Corrigida Fiel",              json: "acf", third: true },
   { id: "arc", lang: "pt",  short: "ARC",  label: "ARC – Almeida Revista e Corrigida",         json: "arc", third: true },

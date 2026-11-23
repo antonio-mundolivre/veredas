@@ -493,9 +493,28 @@ async function initOffline() {
 
 // ---------- geral ----------
 async function initGeneral() {
-  I18N.languages().forEach(l => $("glang").add(new Option(I18N.t("lang.name." + l), l)));
-  $("glang").value = I18N.lang;
-  $("glang").onchange = async e => { await I18N.set(e.target.value); location.reload(); };
+  const FLAGS = {
+    pt: '<rect width="30" height="20" fill="#009c3b"/><path d="M15 2 27.5 10 15 18 2.5 10z" fill="#ffdf00"/><circle cx="15" cy="10" r="4.4" fill="#002776"/><path d="M10.7 9.2q4.6-1.2 8.7 1.4" stroke="#fff" stroke-width=".9" fill="none"/>',
+    en: '<rect width="30" height="20" fill="#fff"/><g fill="#b22234"><rect width="30" height="1.54"/><rect y="3.08" width="30" height="1.54"/><rect y="6.16" width="30" height="1.54"/><rect y="9.24" width="30" height="1.54"/><rect y="12.32" width="30" height="1.54"/><rect y="15.4" width="30" height="1.54"/><rect y="18.46" width="30" height="1.54"/></g><rect width="12" height="10.8" fill="#3c3b6e"/><g fill="#fff"><circle cx="2" cy="2" r=".7"/><circle cx="5" cy="2" r=".7"/><circle cx="8" cy="2" r=".7"/><circle cx="10.5" cy="2" r=".7"/><circle cx="3.5" cy="4.6" r=".7"/><circle cx="6.5" cy="4.6" r=".7"/><circle cx="9.5" cy="4.6" r=".7"/><circle cx="2" cy="7.2" r=".7"/><circle cx="5" cy="7.2" r=".7"/><circle cx="8" cy="7.2" r=".7"/><circle cx="10.5" cy="7.2" r=".7"/></g>',
+    es: '<rect width="30" height="20" fill="#aa151b"/><rect y="5" width="30" height="10" fill="#f1bf00"/>',
+    fr: '<rect width="30" height="20" fill="#fff"/><rect width="10" height="20" fill="#0055a4"/><rect x="20" width="10" height="20" fill="#ef4135"/>',
+    de: '<rect width="30" height="20" fill="#ffce00"/><rect width="30" height="13.4" fill="#dd0000"/><rect width="30" height="6.7" fill="#000"/>'
+  };
+  const box = $("glang");
+  I18N.languages().forEach(l => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "langbtn"; b.dataset.lang = l;
+    b.setAttribute("role", "radio"); b.setAttribute("aria-checked", String(l === I18N.lang));
+    b.classList.toggle("on", l === I18N.lang);
+    b.innerHTML = '<svg class="flag" viewBox="0 0 30 20" aria-hidden="true">' + (FLAGS[l] || "") + "</svg>";
+    const s = document.createElement("span"); s.textContent = I18N.t("lang.name." + l); b.appendChild(s);
+    b.onclick = async () => {
+      if (l === I18N.lang) return;
+      try { sessionStorage.setItem("optScroll", String(window.scrollY)); } catch (x) {}
+      await I18N.set(l); location.reload();
+    };
+    box.appendChild(b);
+  });
   VERSIONS.forEach(v => $("gversion").add(new Option(v.label, v.id)));
   $("gversion").value = (await loadVersion()).id;
   $("gversion").onchange = e => { saveVersion(e.target.value); setStatus(I18N.t("options.versionSaved")); };
@@ -540,6 +559,40 @@ function applyI18n() {
   document.querySelectorAll("[data-orich]").forEach(e => orich(e, I18N.t(e.dataset.orich)));
 }
 
+const TABS = ["plano", "biblias", "geral", "sobre"];
+function showTab(name, opts) {
+  if (!TABS.includes(name)) name = "plano";
+  document.querySelectorAll("section[data-tab]").forEach(s => { s.hidden = s.dataset.tab !== name; });
+  document.querySelectorAll("#tabs [data-go]").forEach(b => {
+    const on = b.dataset.go === name;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
+    if (on && opts && opts.scrollTab) b.scrollIntoView({ block: "nearest", inline: "center" });
+  });
+  try { localStorage.setItem("optTab", name); } catch (x) { /* sem storage */ }
+}
+function tabFromHash() {
+  const id = decodeURIComponent(location.hash.slice(1));
+  if (!id) return null;
+  if (TABS.includes(id)) return id;
+  const el = document.getElementById(id);
+  const s = el && el.closest("[data-tab]");
+  return s ? s.dataset.tab : null;
+}
+function initTabs() {
+  let start = tabFromHash();
+  if (!start) { try { start = localStorage.getItem("optTab"); } catch (x) { /* */ } }
+  showTab(start, { scrollTab: true });
+  document.querySelectorAll("#tabs [data-go]").forEach(b => {
+    b.onclick = () => {
+      showTab(b.dataset.go, { scrollTab: true });
+      history.replaceState(null, "", "#" + b.dataset.go);
+      window.scrollTo(0, 0);
+    };
+  });
+  window.addEventListener("hashchange", () => { const n = tabFromHash(); if (n) showTab(n, { scrollTab: true }); });
+}
+
 async function init() {
   await I18N.ready;
   applyI18n();
@@ -550,6 +603,7 @@ async function init() {
   renderAll();
   await initGeneral();
   await initOffline();
+  initTabs();
   $("save").onclick = save;
   chrome.storage.onChanged.addListener(changes => {
     if (changes.version) $("gversion").value = changes.version.newValue;
@@ -558,5 +612,9 @@ async function init() {
   window.addEventListener("pagehide", flush);
   document.addEventListener("visibilitychange", () => { if (document.hidden) flush(); });
   $("ver").textContent = I18N.t("options.extVersion", { v: chrome.runtime.getManifest().version });
+  try {
+    const y = sessionStorage.getItem("optScroll");
+    if (y != null) { sessionStorage.removeItem("optScroll"); window.scrollTo(0, +y); requestAnimationFrame(() => window.scrollTo(0, +y)); }
+  } catch (x) { /* sem sessionStorage */ }
 }
 init();

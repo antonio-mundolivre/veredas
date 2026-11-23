@@ -72,7 +72,7 @@
   }
   const local = area("l:"), sync = area("s:");
   const noWin = () => Promise.reject(new Error("sem janelas na web"));
-  const manifest = { version: "2.6", name: "Veredas" };
+  const manifest = { version: "2.8", name: "Veredas" };
   window.chrome = {
     storage: { local, sync, onChanged: { addListener: f => listeners.add(f), removeListener: f => listeners.delete(f) } },
     runtime: {
@@ -102,7 +102,7 @@
     // botão Início nas telas de leitura
     const nav = document.querySelector(".toolbar .nav");
     if (nav) {
-      const b = document.createElement("button"); b.textContent = "Início"; b.className = "homeBtn";
+      const b = document.createElement("button"); b.textContent = "Início"; b.dataset.i18n = "web.home"; b.className = "homeBtn";
       b.onclick = () => { location.href = "index.html"; };
       nav.prepend(b);
       // no celular, a barra de ajustes fica recolhida
@@ -110,15 +110,16 @@
       const more = document.createElement("div"); more.className = "tbmore";   // ajustes: no celular abrem por cima do texto, sem mexer no layout
       [...tb.children].forEach(c => { if (c !== nav && !c.classList.contains("brand")) more.append(c); });
       tb.append(more);
-      const t = document.createElement("button"); t.className = "tbToggle"; t.textContent = "Aa ▾"; t.setAttribute("aria-label", "Ajustes de leitura");
+      const t = document.createElement("button"); t.className = "tbToggle"; t.textContent = "Aa ▾"; t.setAttribute("aria-label", "Ajustes de leitura"); t.dataset.i18nAriaLabel = "web.adjust";
       t.onclick = () => { const o = tb.classList.toggle("open"); t.textContent = o ? "Aa ▴" : "Aa ▾"; };
       tb.append(t);
     }
     if (page === "options.html") {
       const h = document.querySelector("main h1");
-      if (h) { const a = document.createElement("button"); a.textContent = "‹ Início"; a.onclick = () => { location.href = "index.html"; }; a.style.marginBottom = "10px"; h.before(a); }
+      if (h) { const a = document.createElement("button"); a.innerHTML = '‹ <span data-i18n="web.home">Início</span>'; a.onclick = () => { location.href = "index.html"; }; a.style.marginBottom = "10px"; h.before(a); }
       const sy = document.getElementById("sync"); if (sy) sy.closest("label").hidden = true;
     }
+    if (window.I18N) I18N.ready.then(() => I18N.apply());   // traduz os botões criados aqui
     // virar página com o dedo (deslizar na horizontal)
     const pg = document.getElementById("pager");
     if (pg) {
