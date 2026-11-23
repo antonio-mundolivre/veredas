@@ -564,5 +564,427 @@ const BOOK_LANG = {
     "2reyes"
    ]
   }
+ },
+ "fr": {
+  "names": [
+   "Genèse",
+   "Exode",
+   "Lévitique",
+   "Nombres",
+   "Deutéronome",
+   "Josué",
+   "Juges",
+   "Ruth",
+   "1 Samuel",
+   "2 Samuel",
+   "1 Rois",
+   "2 Rois",
+   "1 Chroniques",
+   "2 Chroniques",
+   "Esdras",
+   "Néhémie",
+   "Esther",
+   "Job",
+   "Psaumes",
+   "Proverbes",
+   "Ecclésiaste",
+   "Cantique des cantiques",
+   "Ésaïe",
+   "Jérémie",
+   "Lamentations",
+   "Ézéchiel",
+   "Daniel",
+   "Osée",
+   "Joël",
+   "Amos",
+   "Abdias",
+   "Jonas",
+   "Michée",
+   "Nahum",
+   "Habacuc",
+   "Sophonie",
+   "Aggée",
+   "Zacharie",
+   "Malachie",
+   "Matthieu",
+   "Marc",
+   "Luc",
+   "Jean",
+   "Actes",
+   "Romains",
+   "1 Corinthiens",
+   "2 Corinthiens",
+   "Galates",
+   "Éphésiens",
+   "Philippiens",
+   "Colossiens",
+   "1 Thessaloniciens",
+   "2 Thessaloniciens",
+   "1 Timothée",
+   "2 Timothée",
+   "Tite",
+   "Philémon",
+   "Hébreux",
+   "Jacques",
+   "1 Pierre",
+   "2 Pierre",
+   "1 Jean",
+   "2 Jean",
+   "3 Jean",
+   "Jude",
+   "Apocalypse"
+  ],
+  "abbr": [
+   "Gn",
+   "Ex",
+   "Lv",
+   "Nb",
+   "Dt",
+   "Jos",
+   "Jg",
+   "Ru",
+   "1S",
+   "2S",
+   "1R",
+   "2R",
+   "1Ch",
+   "2Ch",
+   "Esd",
+   "Né",
+   "Est",
+   "Job",
+   "Ps",
+   "Pr",
+   "Ec",
+   "Ct",
+   "Es",
+   "Jr",
+   "Lm",
+   "Ez",
+   "Dn",
+   "Os",
+   "Jl",
+   "Am",
+   "Ab",
+   "Jon",
+   "Mi",
+   "Na",
+   "Ha",
+   "So",
+   "Ag",
+   "Za",
+   "Ml",
+   "Mt",
+   "Mc",
+   "Lc",
+   "Jn",
+   "Ac",
+   "Rm",
+   "1Co",
+   "2Co",
+   "Ga",
+   "Ép",
+   "Ph",
+   "Col",
+   "1Th",
+   "2Th",
+   "1Tm",
+   "2Tm",
+   "Tt",
+   "Phm",
+   "Hé",
+   "Jc",
+   "1P",
+   "2P",
+   "1Jn",
+   "2Jn",
+   "3Jn",
+   "Jud",
+   "Ap"
+  ],
+  "extra": {
+   "sl": [
+    "ps",
+    "psaume"
+   ],
+   "jo": [
+    "jn"
+   ],
+   "ct": [
+    "cantique",
+    "cantiquedescantiques",
+    "ca"
+   ],
+   "ap": [
+    "apoc"
+   ],
+   "mt": [
+    "matt"
+   ],
+   "gn": [
+    "gen",
+    "genese"
+   ],
+   "ex": [
+    "exo"
+   ],
+   "lv": [
+    "lev"
+   ],
+   "nm": [
+    "nom",
+    "nb"
+   ],
+   "dt": [
+    "deut"
+   ],
+   "jz": [
+    "jug"
+   ],
+   "is": [
+    "esaie",
+    "isaie",
+    "es"
+   ],
+   "ez": [
+    "ezechiel",
+    "ezek"
+   ],
+   "atos": [
+    "act"
+   ],
+   "hb": [
+    "heb"
+   ],
+   "tg": [
+    "jac"
+   ],
+   "ed": [
+    "esd"
+   ],
+   "ne": [
+    "nehemie"
+   ]
+  }
+ },
+ "de": {
+  "names": [
+   "1. Mose",
+   "2. Mose",
+   "3. Mose",
+   "4. Mose",
+   "5. Mose",
+   "Josua",
+   "Richter",
+   "Ruth",
+   "1. Samuel",
+   "2. Samuel",
+   "1. Könige",
+   "2. Könige",
+   "1. Chronik",
+   "2. Chronik",
+   "Esra",
+   "Nehemia",
+   "Esther",
+   "Hiob",
+   "Psalmen",
+   "Sprüche",
+   "Prediger",
+   "Hoheslied",
+   "Jesaja",
+   "Jeremia",
+   "Klagelieder",
+   "Hesekiel",
+   "Daniel",
+   "Hosea",
+   "Joel",
+   "Amos",
+   "Obadja",
+   "Jona",
+   "Micha",
+   "Nahum",
+   "Habakuk",
+   "Zefanja",
+   "Haggai",
+   "Sacharja",
+   "Maleachi",
+   "Matthäus",
+   "Markus",
+   "Lukas",
+   "Johannes",
+   "Apostelgeschichte",
+   "Römer",
+   "1. Korinther",
+   "2. Korinther",
+   "Galater",
+   "Epheser",
+   "Philipper",
+   "Kolosser",
+   "1. Thessalonicher",
+   "2. Thessalonicher",
+   "1. Timotheus",
+   "2. Timotheus",
+   "Titus",
+   "Philemon",
+   "Hebräer",
+   "Jakobus",
+   "1. Petrus",
+   "2. Petrus",
+   "1. Johannes",
+   "2. Johannes",
+   "3. Johannes",
+   "Judas",
+   "Offenbarung"
+  ],
+  "abbr": [
+   "1Mo",
+   "2Mo",
+   "3Mo",
+   "4Mo",
+   "5Mo",
+   "Jos",
+   "Ri",
+   "Rt",
+   "1Sam",
+   "2Sam",
+   "1Kö",
+   "2Kö",
+   "1Chr",
+   "2Chr",
+   "Esr",
+   "Neh",
+   "Est",
+   "Hi",
+   "Ps",
+   "Spr",
+   "Pred",
+   "Hld",
+   "Jes",
+   "Jer",
+   "Klgl",
+   "Hes",
+   "Dan",
+   "Hos",
+   "Joel",
+   "Am",
+   "Ob",
+   "Jon",
+   "Mi",
+   "Nah",
+   "Hab",
+   "Zef",
+   "Hag",
+   "Sach",
+   "Mal",
+   "Mt",
+   "Mk",
+   "Lk",
+   "Joh",
+   "Apg",
+   "Röm",
+   "1Kor",
+   "2Kor",
+   "Gal",
+   "Eph",
+   "Phil",
+   "Kol",
+   "1Thess",
+   "2Thess",
+   "1Tim",
+   "2Tim",
+   "Tit",
+   "Phim",
+   "Hebr",
+   "Jak",
+   "1Petr",
+   "2Petr",
+   "1Joh",
+   "2Joh",
+   "3Joh",
+   "Jud",
+   "Offb"
+  ],
+  "extra": {
+   "gn": [
+    "genesis",
+    "1mose",
+    "1mo"
+   ],
+   "ex": [
+    "exodus",
+    "2mose",
+    "2mo"
+   ],
+   "lv": [
+    "leviticus",
+    "3mose",
+    "3mo"
+   ],
+   "nm": [
+    "numeri",
+    "4mose",
+    "4mo"
+   ],
+   "dt": [
+    "deuteronomium",
+    "5mose",
+    "5mo"
+   ],
+   "sl": [
+    "ps",
+    "psalm"
+   ],
+   "jo": [
+    "joh",
+    "jn"
+   ],
+   "ap": [
+    "offenbarung",
+    "off",
+    "apk"
+   ],
+   "ct": [
+    "hohelied",
+    "hl"
+   ],
+   "jó": [
+    "job",
+    "ijob"
+   ],
+   "atos": [
+    "apg",
+    "apostelgeschichte"
+   ],
+   "mt": [
+    "matth"
+   ],
+   "is": [
+    "jesaia"
+   ],
+   "ez": [
+    "hesekiel",
+    "ezechiel"
+   ],
+   "hb": [
+    "hebr"
+   ],
+   "tg": [
+    "jak",
+    "jakobus"
+   ],
+   "rm": [
+    "roemer",
+    "röm",
+    "rom"
+   ],
+   "pv": [
+    "spr",
+    "sprueche"
+   ],
+   "ec": [
+    "pred",
+    "prediger"
+   ]
+  }
  }
 };
