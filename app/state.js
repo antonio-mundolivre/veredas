@@ -2,31 +2,31 @@
 // Leitura baseada no que falta: o "capítulo de hoje" é sempre o próximo não lido.
 
 const WEEK_ALL = [0, 1, 2, 3, 4, 5, 6];
-const WEEK_NAMES = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const weekName = d => I18N.t("state.week." + d);
 const MAX_TRACKS = 8;
 const UNIT_DAYS = { d: 1, m: 30, y: 365 };
 const PLAN_KEY = "plan";
 const range = (a, b) => Array.from({ length: b - a + 1 }, (_, k) => a + k);
 
 const SCOPE_PRESETS = [
-  { id: "all",        label: "Bíblia toda",                          books: range(0, 65) },
-  { id: "ot",         label: "Antigo Testamento",                    books: range(0, 38) },
-  { id: "nt",         label: "Novo Testamento",                      books: range(39, 65) },
-  { id: "pentateuch", label: "Pentateuco (Gênesis a Deuteronômio)",  books: range(0, 4) },
-  { id: "history",    label: "Históricos (Josué a Ester)",           books: range(5, 16) },
-  { id: "poetry",     label: "Poéticos (Jó a Cantares)",             books: range(17, 21) },
-  { id: "prophets",   label: "Profetas (Isaías a Malaquias)",        books: range(22, 38) },
-  { id: "gospels",    label: "Evangelhos",                           books: range(39, 42) },
-  { id: "epistles",   label: "Cartas (Romanos a Judas)",             books: range(44, 64) },
-  { id: "psalms",     label: "Salmos",                               books: [18] },
-  { id: "proverbs",   label: "Provérbios",                           books: [19] },
+  { id: "all", get label() { return I18N.t("state.scope.all"); },                          books: range(0, 65) },
+  { id: "ot", get label() { return I18N.t("state.scope.ot"); },                    books: range(0, 38) },
+  { id: "nt", get label() { return I18N.t("state.scope.nt"); },                      books: range(39, 65) },
+  { id: "pentateuch", get label() { return I18N.t("state.scope.pentateuch"); },  books: range(0, 4) },
+  { id: "history", get label() { return I18N.t("state.scope.history"); },           books: range(5, 16) },
+  { id: "poetry", get label() { return I18N.t("state.scope.poetry"); },             books: range(17, 21) },
+  { id: "prophets", get label() { return I18N.t("state.scope.prophets"); },        books: range(22, 38) },
+  { id: "gospels", get label() { return I18N.t("state.scope.gospels"); },                           books: range(39, 42) },
+  { id: "epistles", get label() { return I18N.t("state.scope.epistles"); },             books: range(44, 64) },
+  { id: "psalms", get label() { return I18N.t("state.scope.psalms"); },                               books: [18] },
+  { id: "proverbs", get label() { return I18N.t("state.scope.proverbs"); },                           books: [19] },
 ];
 
 // ---------- datas ----------
 const todayStr = () => new Date().toLocaleDateString("sv-SE"); // AAAA-MM-DD (fuso local)
 const parseDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
 const addDays = (s, n) => { const d = parseDate(s); d.setDate(d.getDate() + n); return d.toLocaleDateString("sv-SE"); };
-const fmtDate = s => { const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };
+const fmtDate = s => parseDate(s).toLocaleDateString(I18N.locale, { day: "2-digit", month: "2-digit", year: "numeric" });
 const dow = s => parseDate(s).getDay();
 
 // ---------- trilhas ----------
@@ -53,7 +53,7 @@ function trackChapters(t) {
 function newTrack(o = {}) {
   return {
     id: o.id || "t" + Math.random().toString(36).slice(2, 8),
-    name: o.name || "Trilha",
+    name: o.name || I18N.t("state.trackDefault"),
     role: o.role || "main",   // "main" = trilha principal, "sec" = secundária (sempre em loop)
     order: o.order || "canon", // "canon" ou "parallel" (Antigo e Novo Testamento intercalados)
     books: (o.books || range(0, 65)).slice().sort((a, b) => a - b),
@@ -76,28 +76,28 @@ function finishInPace(days) {
 const secTrack = (books, n = 1) => newTrack({ name: namesOf(books), role: "sec", books, pace: { mode: "perDay", n }, loop: true });
 const namesOf = bs => {
   const n = bs.map(b => BOOKS[b][0]);
-  return n.length > 1 ? n.slice(0, -1).join(", ") + " e " + n[n.length - 1] : (n[0] || "Trilha");
+  return n.length > 1 ? n.slice(0, -1).join(", ") + I18N.t("state.and") + n[n.length - 1] : (n[0] || I18N.t("state.trackDefault"));
 };
 
 const TEMPLATES = [
-  { id: "mine", name: "Bíblia + Salmos em loop",
-    desc: "1 capítulo por dia até terminar a Bíblia, mais 1 Salmo por dia, recomeçando no Salmo 1 ao chegar ao 150.",
-    build: () => [newTrack({ name: "Bíblia", pace: { mode: "perDay", n: 1 } }), secTrack([18])] },
-  { id: "y1", name: "Bíblia em 1 ano",
-    desc: "A Bíblia toda em 365 dias (cerca de 3 a 4 capítulos por dia).",
-    build: () => [newTrack({ name: "Bíblia em 1 ano", pace: finishInPace(365) })] },
-  { id: "y2", name: "Bíblia em 2 anos",
-    desc: "A Bíblia toda em 730 dias (cerca de 1 a 2 capítulos por dia).",
-    build: () => [newTrack({ name: "Bíblia em 2 anos", pace: finishInPace(730) })] },
-  { id: "par", name: "Antigo e Novo Testamento em paralelo",
-    desc: "Os dois testamentos intercalados na mesma trilha (3 capítulos do Antigo para 1 do Novo), terminando juntos em 1 ano.",
-    build: () => [newTrack({ name: "Bíblia em paralelo", order: "parallel", pace: finishInPace(365) })] },
-  { id: "nt90", name: "Novo Testamento em 90 dias",
-    desc: "Do Evangelho de Mateus ao Apocalipse em três meses (cerca de 3 capítulos por dia).",
-    build: () => [newTrack({ name: "Novo Testamento", books: range(39, 65), pace: finishInPace(90) })] },
-  { id: "yps", name: "Bíblia em 1 ano + Salmos e Provérbios",
-    desc: "Bíblia em 365 dias, mais 1 Salmo e 1 capítulo de Provérbios por dia, cada um em loop.",
-    build: () => [newTrack({ name: "Bíblia em 1 ano", pace: finishInPace(365) }), secTrack([18]), secTrack([19])] },
+  { id: "mine", get name() { return I18N.t("state.tpl.mine.name"); },
+    get desc() { return I18N.t("state.tpl.mine.desc"); },
+    build: () => [newTrack({ name: I18N.t("state.trackName.bible"), pace: { mode: "perDay", n: 1 } }), secTrack([18])] },
+  { id: "y1", get name() { return I18N.t("state.tpl.y1.name"); },
+    get desc() { return I18N.t("state.tpl.y1.desc"); },
+    build: () => [newTrack({ name: I18N.t("state.trackName.y1"), pace: finishInPace(365) })] },
+  { id: "y2", get name() { return I18N.t("state.tpl.y2.name"); },
+    get desc() { return I18N.t("state.tpl.y2.desc"); },
+    build: () => [newTrack({ name: I18N.t("state.trackName.y2"), pace: finishInPace(730) })] },
+  { id: "par", get name() { return I18N.t("state.tpl.par.name"); },
+    get desc() { return I18N.t("state.tpl.par.desc"); },
+    build: () => [newTrack({ name: I18N.t("state.trackName.par"), order: "parallel", pace: finishInPace(365) })] },
+  { id: "nt90", get name() { return I18N.t("state.tpl.nt90.name"); },
+    get desc() { return I18N.t("state.tpl.nt90.desc"); },
+    build: () => [newTrack({ name: I18N.t("state.trackName.nt"), books: range(39, 65), pace: finishInPace(90) })] },
+  { id: "yps", get name() { return I18N.t("state.tpl.yps.name"); },
+    get desc() { return I18N.t("state.tpl.yps.desc"); },
+    build: () => [newTrack({ name: I18N.t("state.trackName.y1"), pace: finishInPace(365) }), secTrack([18]), secTrack([19])] },
 ];
 
 // ---------- ritmo ----------
@@ -164,11 +164,11 @@ function paceText(t) {
   let txt;
   if (t.pace.mode === "perDay") {
     const est = finishEstimate(t);
-    txt = `${t.pace.n} cap./dia` + (est ? ` · previsão: ${fmtDate(est)}` : t.loop ? " · em loop" : "");
+    txt = I18N.t("state.pace.perDay", { n: t.pace.n }) + (est ? I18N.t("state.pace.forecast", { date: fmtDate(est) }) : t.loop ? I18N.t("state.pace.loop") : "");
   } else {
-    txt = `Meta: ${fmtDate(t.pace.end)}` + (trackStatus(t).overdue ? " (prazo vencido)" : "");
+    txt = I18N.t("state.pace.goal", { date: fmtDate(t.pace.end) }) + (trackStatus(t).overdue ? I18N.t("state.pace.overdue") : "");
   }
-  if (t.weekdays.length < 7) txt += " · " + t.weekdays.map(d => WEEK_NAMES[d]).join(", ");
+  if (t.weekdays.length < 7) txt += " · " + t.weekdays.map(weekName).join(", ");
   return txt;
 }
 
@@ -219,7 +219,7 @@ async function migrateOld() {
   const today = todayStr();
   const hist = Array.isArray(old.history) ? old.history : [];
   const ch = hist.filter(h => h.type === "chapter"), ps = hist.filter(h => h.type === "psalm");
-  const bible = newTrack({ name: "Bíblia", role: "main", pace: { mode: "perDay", n: 1 }, pos: Math.min(old.chapterIdx || 0, CHAPTERS.length) });
+  const bible = newTrack({ name: I18N.t("state.trackName.bible"), role: "main", pace: { mode: "perDay", n: 1 }, pos: Math.min(old.chapterIdx || 0, CHAPTERS.length) });
   const psalms = newTrack({ name: "Salmos", role: "sec", books: [18], pace: { mode: "perDay", n: 1 }, loop: true, pos: Math.max(0, (old.psalmIdx || 1) - 1) });
   psalms.cycles = old.psalmCycles || 0;
   bible.todayDate = psalms.todayDate = today;

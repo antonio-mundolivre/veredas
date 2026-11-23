@@ -19,43 +19,44 @@
 <body data-mode="lines">
   <div class="toolbar">
     <span class="brand"><img class="logo" src="icons/icon16.png" alt="">Veredas</span>
-    <div class="group nav"><button id="goReader">Plano</button><button class="active" disabled>Passagens</button></div>
+    <div class="group nav"><button id="goReader" data-i18n="common.nav.plan">Plano</button><button class="active" disabled data-i18n="common.nav.passages">Passagens</button></div>
     <div class="group">
-      <button id="sizeDown" title="Diminuir letra">A−</button>
-      <button id="sizeUp" title="Aumentar letra">A+</button>
+      <button id="sizeDown" title="Diminuir letra" data-i18n-title="common.size.down">A−</button>
+      <button id="sizeUp" title="Aumentar letra" data-i18n-title="common.size.up">A+</button>
     </div>
     <div class="group">
-      <button data-theme-btn="light">Claro</button>
-      <button data-theme-btn="sepia">Sépia</button>
-      <button data-theme-btn="dark">Escuro</button>
+      <button data-theme-btn="light" data-i18n="common.theme.light">Claro</button>
+      <button data-theme-btn="sepia" data-i18n="common.theme.sepia">Sépia</button>
+      <button data-theme-btn="dark" data-i18n="common.theme.dark">Escuro</button>
     </div>
-    <label>Versão <select id="version"></select></label>
+    <label><span data-i18n="common.version">Versão</span> <select id="version"></select></label>
     <span id="offbadge" class="badge"></span>
     <div class="group align" id="alignGroup"></div>
-    <label>Largura
+    <label><span data-i18n="common.width">Largura</span>
       <select id="width">
-        <option value="26">Estreita</option>
-        <option value="32">Média</option>
-        <option value="40">Larga</option>
+        <option value="26" data-i18n="common.width.narrow">Estreita</option>
+        <option value="32" data-i18n="common.width.medium">Média</option>
+        <option value="40" data-i18n="common.width.wide">Larga</option>
       </select>
     </label>
-    <label>Layout
+    <label><span data-i18n="common.layout">Layout</span>
       <select id="mode">
-        <option value="lines">Um versículo por linha</option>
-        <option value="flow">Texto corrido</option>
+        <option value="lines" data-i18n="common.layout.lines">Um versículo por linha</option>
+        <option value="flow" data-i18n="common.layout.flow">Texto corrido</option>
       </select>
     </label>
-    <label class="inl"><input type="checkbox" id="allView"> Ver todos juntos</label>
+    <label class="inl"><input type="checkbox" id="allView"> <span data-i18n="culto.allView">Ver todos juntos</span></label>
   </div>
 
   <div class="finder">
     <div class="qline">
       <input id="q" autocomplete="off" spellcheck="false"
-             placeholder="Digite a passagem e Enter — ex.: jo 1:2-4 · sl 23 · 1co 13:4-7">
-      <button id="booksBtn" class="ib" aria-label="Nova passagem: escolher o livro" title="Nova passagem (escolher livro e capítulo)"></button>
-      <button id="newBtn" class="ib" aria-label="Novo" title="Novo: começar uma lista vazia (dá para desfazer)"></button>
-      <button id="saveBtn" class="ib" aria-label="Guardar" title="Guardar estas passagens"></button>
-      <button id="readBtn" class="ib" aria-label="Abrir" title="Abrir passagens guardadas"></button>
+             placeholder="Digite a passagem e Enter — ex.: jo 1:2-4 · sl 23 · 1co 13:4-7"
+             data-i18n-placeholder="culto.q.placeholder">
+      <button id="booksBtn" class="ib" aria-label="Nova passagem: escolher o livro" title="Nova passagem (escolher livro e capítulo)" data-i18n-aria-label="culto.booksBtn.aria" data-i18n-title="culto.booksBtn.tip"></button>
+      <button id="newBtn" class="ib" aria-label="Novo" title="Novo: começar uma lista vazia (dá para desfazer)" data-i18n-aria-label="culto.newBtn.aria" data-i18n-title="culto.newBtn.tip"></button>
+      <button id="saveBtn" class="ib" aria-label="Guardar" title="Guardar estas passagens" data-i18n-aria-label="culto.saveBtn.aria" data-i18n-title="culto.saveBtn.tip"></button>
+      <button id="readBtn" class="ib" aria-label="Abrir" title="Abrir passagens guardadas" data-i18n-aria-label="culto.readBtn.aria" data-i18n-title="culto.readBtn.tip"></button>
     </div>
     <div id="qmsg" class="qmsg"></div>
     <div id="tabs" class="tabs"></div>
@@ -67,13 +68,18 @@
   <div id="pager"><main id="content"></main></div>
 
   <div class="pagebar">
-    <button id="prev">‹ Anterior</button>
+    <button id="prev" data-i18n="common.prev">‹ Anterior</button>
     <div class="mid"><div id="pageinfo"></div><div id="credit" class="credit"></div></div>
-    <button id="next">Próxima ›</button>
+    <button id="next" data-i18n="common.next">Próxima ›</button>
   </div>
 
   <script src="web-shim.js"></script>
   <script src="bible-data.js"></script>
+  <script src="lang/books.js"></script>
+  <script src="i18n.js"></script>
+  <script src="lang/pt.js"></script>
+  <script src="lang/en.js"></script>
+  <script src="lang/es.js"></script>
   <script src="state.js"></script>
   <script src="source.js"></script>
   <script src="pager.js"></script>

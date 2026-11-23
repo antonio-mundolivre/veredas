@@ -21,19 +21,19 @@ function normBook(b) {
 // Os livros são identificados pela posição (ordem canônica de 66 livros).
 function normalizeBible(j) {
   const books = Array.isArray(j) ? j : toList(j && j.books ? j.books : j);
-  if (books.length < 66) throw new Error(`Formato não reconhecido (${books.length} livros encontrados).`);
+  if (books.length < 66) throw new Error(I18N.t("source.badFormat", { n: books.length }));
   const norm = books.slice(0, 66).map(normBook);
   const bad = norm.findIndex((b, i) => b.length !== BOOKS[i][2]);
-  if (bad >= 0) throw new Error(`Estrutura inesperada: ${BOOKS[bad][0]} tem ${norm[bad].length} capítulos (esperado ${BOOKS[bad][2]}).`);
+  if (bad >= 0) throw new Error(I18N.t("source.badStructure", { book: BOOKS[bad][0], n: norm[bad].length, exp: BOOKS[bad][2] }));
   return norm;
 }
 // Pacote padrão do ecossistema (veja PACOTE-DE-TEXTO.md) ou qualquer formato aceito acima
 function normalizePackage(j) {
   if (j && j.format === "biblia-pacote") {
-    if (!Array.isArray(j.books) || j.books.length !== 66) throw new Error("Pacote inválido: esperado 66 livros.");
+    if (!Array.isArray(j.books) || j.books.length !== 66) throw new Error(I18N.t("source.badPackage66"));
     const norm = j.books.map(b => (b.chapters || []).map(ch => ch.map(cleanVerse)));
     const bad = norm.findIndex((b, i) => b.length !== BOOKS[i][2]);
-    if (bad >= 0) throw new Error(`Pacote inválido: ${BOOKS[bad][0]} tem ${norm[bad].length} capítulos (esperado ${BOOKS[bad][2]}).`);
+    if (bad >= 0) throw new Error(I18N.t("source.badPackageStructure", { book: BOOKS[bad][0], n: norm[bad].length, exp: BOOKS[bad][2] }));
     return norm;
   }
   return normalizeBible(j);
@@ -82,7 +82,7 @@ async function isOfflineOnly() {
 
 // ---------- baixar / importar / exportar ----------
 async function downloadPack(ver, onProgress) {
-  if (!ver.json) throw new Error("Esta versão não tem download direto. Use “Importar…” com um arquivo de pacote.");
+  if (!ver.json) throw new Error(I18N.t("source.noDirect"));
   const res = await fetch(GITHUB_BASE + ver.json + ".json", { credentials: "omit" });
   if (!res.ok) throw new Error("O servidor respondeu HTTP " + res.status);
   const total = +res.headers.get("content-length") || 0;
@@ -118,7 +118,7 @@ async function addCustomVersion(v) {
 // Importa um arquivo de pacote. Com "target", grava naquela versão; sem, cria/atualiza uma versão pelo id do arquivo.
 async function importPackageText(text, target) {
   let j;
-  try { j = JSON.parse(text); } catch (e) { throw new Error("O arquivo não é um JSON válido."); }
+  try { j = JSON.parse(text); } catch (e) { throw new Error(I18N.t("source.badJson")); }
   const norm = normalizePackage(j);
   let ver = target;
   if (!ver) {
@@ -132,7 +132,7 @@ async function importPackageText(text, target) {
 
 async function buildPackage(ver) {
   const t = await getTranslation(ver, true);
-  if (!t) throw new Error("A versão ainda não está baixada neste aparelho.");
+  if (!t) throw new Error(I18N.t("source.notDownloaded"));
   return {
     format: "biblia-pacote", version: 1, id: packOf(ver), name: ver.label, language: "pt-BR", license: "",
     books: BOOKS.map((b, i) => ({ id: b[3], name: b[0], chapters: t.norm[i] }))
@@ -163,17 +163,17 @@ async function fetchVerses(c, ver) {
       const arr = t.norm[c.book][c.chapter - 1];
       if (arr && arr.some(Boolean)) {
         return {
-          source: t.from === "GitHub" ? "baixada agora" : t.from === "pacote" ? "pacote embutido" : "offline ✓",
+          source: t.from === "GitHub" ? I18N.t("source.from.github") : t.from === "pacote" ? I18N.t("source.from.package") : I18N.t("source.from.offline"),
           verses: arr.map((text, k) => ({ n: k + 1, text, heading: null, brk: false }))
         };
       }
-      errors.push("capítulo vazio");
+      errors.push(I18N.t("source.emptyChapter"));
     }
   } catch (e) { errors.push(e.message); }
 
   const err = new Error(offline
-    ? `A versão ${ver.short} não está baixada neste aparelho. Abra Configurações › Textos offline e baixe ou importe esta versão.`
-    : "Não consegui carregar este capítulo. " + errors.join(" · "));
+    ? I18N.t("source.offlineMissing", { ver: ver.short })
+    : I18N.t("source.loadFail") + errors.join(" · "));
   err.debug = errors.join("\n");
   throw err;
 }

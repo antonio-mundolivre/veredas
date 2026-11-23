@@ -18,26 +18,31 @@
 <body class="home-page">
   <div class="head">
     <h1><img class="logo" src="icons/icon32.png" alt="">Veredas</h1>
-    <button id="openOptions" class="icon" title="Configurar plano de leitura">⚙</button>
+    <button id="openOptions" class="icon" title="Configurar plano de leitura" data-i18n-title="popup.optionsTip">⚙</button>
   </div>
 
-  <button id="openCulto" class="wide">⛪ Passagens</button>
+  <button id="openCulto" class="wide" data-i18n="popup.passages">⛪ Passagens</button>
 
   <section id="empty" class="card" hidden>
-    <p>Você ainda não tem um plano de leitura.</p>
-    <button id="startSetup" class="primary wide">Escolher meu plano</button>
+    <p data-i18n="popup.noPlan">Você ainda não tem um plano de leitura.</p>
+    <button id="startSetup" class="primary wide" data-i18n="popup.choosePlan">Escolher meu plano</button>
   </section>
 
   <div id="cards"></div>
 
-  <button id="openToday" class="wide" hidden>Abrir leitura de hoje</button>
+  <button id="openToday" class="wide" hidden data-i18n="popup.openToday">Abrir leitura de hoje</button>
 
-  <label class="ver">Versão da Bíblia
+  <label class="ver"><span data-i18n="popup.bibleVersion">Versão da Bíblia</span>
     <select id="version"></select>
   </label>
 
   <script src="web-shim.js"></script>
   <script src="bible-data.js"></script>
+  <script src="lang/books.js"></script>
+  <script src="i18n.js"></script>
+  <script src="lang/pt.js"></script>
+  <script src="lang/en.js"></script>
+  <script src="lang/es.js"></script>
   <script src="state.js"></script>
   <script src="popup.js"></script>
 </body>

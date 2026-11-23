@@ -31,13 +31,17 @@ const PSALM_START = CHAPTERS.findIndex(c => c.book === PSALMS_BOOK); // índice 
 //  json           → id do arquivo no repositório público do GitHub (download opcional feito pelo próprio usuário)
 //  third: true    → texto de terceiros: não é distribuído pelo Veredas; o direito de uso é de quem baixa
 const VERSIONS = [
-  { id: "blivre", short: "BLIVRE", label: "BLIVRE – Bíblia Livre (Almeida 1819, rev. 2018)", bundled: true, // @blivre
+  { id: "blivre", lang: "pt", short: "BLIVRE", label: "BLIVRE – Bíblia Livre (Almeida 1819, rev. 2018)", bundled: true, // @blivre
     credit: "Bíblia Livre (BLIVRE), Textus Receptus — Copyright © 2018 Diego Santos, Mario Sérgio e Marco Teles — sites.google.com/site/biblialivre — fevereiro de 2018 — Licença Creative Commons Atribuição 4.0 (creativecommons.org/licenses/by/4.0/br/)" }, // @blivre
-  { id: "bkj",  short: "BKJ",  label: "BKJ – Bíblia King James Fiel",              json: "kja", third: true },
-  { id: "acf",  short: "ACF",  label: "ACF – Almeida Corrigida Fiel",              json: "acf", third: true },
-  { id: "arc",  short: "ARC",  label: "ARC – Almeida Revista e Corrigida",         json: "arc", third: true },
-  { id: "aa",   short: "AA",   label: "AA – Almeida Revisada Imprensa Bíblica",    json: "aa",  third: true },
-  { id: "nvi",  short: "NVI",  label: "NVI – Nova Versão Internacional",           json: "nvi", third: true }
+  { id: "web", lang: "en", short: "WEB", label: "WEB – World English Bible", bundled: true, // @web
+    credit: "World English Bible (WEB) — Public Domain. “World English Bible” is a trademark of eBible.org — ebible.org/web" }, // @web
+  { id: "rvg", lang: "es", short: "RVG", label: "RVG – Santa Biblia Reina Valera Gómez", bundled: true, // @rvg
+    credit: "Santa Biblia Reina Valera Gómez (RVG) — Copyright © 2004, 2010, 2023 Dr. Humberto Gómez Caballero — ebible.org/find/details.php?id=sparvg — Prohibido reproducirla con fines de lucro; distribución gratuita permitida sin cambiar ninguna palabra." }, // @rvg
+  { id: "bkj", lang: "pt",  short: "BKJ",  label: "BKJ – Bíblia King James Fiel",              json: "kja", third: true },
+  { id: "acf", lang: "pt",  short: "ACF",  label: "ACF – Almeida Corrigida Fiel",              json: "acf", third: true },
+  { id: "arc", lang: "pt",  short: "ARC",  label: "ARC – Almeida Revista e Corrigida",         json: "arc", third: true },
+  { id: "aa", lang: "pt",   short: "AA",   label: "AA – Almeida Revisada Imprensa Bíblica",    json: "aa",  third: true },
+  { id: "nvi", lang: "pt",  short: "NVI",  label: "NVI – Nova Versão Internacional",           json: "nvi", third: true }
 ];
 
 // id do arquivo/cópia local de cada versão (versões sem download direto usam o próprio id)

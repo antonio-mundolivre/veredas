@@ -27,9 +27,9 @@ const Pager = (() => {
 
   function updateBar() {
     const last = page >= pages - 1;
-    info.textContent = `Página ${page + 1} de ${pages}`;
+    info.textContent = I18N.t("pager.page", { page: page + 1, pages });
     prevB.disabled = page <= 0;
-    nextB.textContent = last && hooks.next ? "Próximo capítulo ›" : "Próxima ›";
+    nextB.textContent = last && hooks.next ? I18N.t("pager.nextChapter") : I18N.t("pager.next");
     nextB.disabled = last && !hooks.next;
   }
   function goTo(p) {
@@ -97,7 +97,7 @@ const Pager = (() => {
       b.onclick = () => set(v);
       return b;
     };
-    group.replaceChildren(mk("left", "Alinhar à esquerda"), mk("center", "Centralizar"), mk("right", "Alinhar à direita"), mk("justify", "Justificar nas duas margens"));
+    group.replaceChildren(mk("left", I18N.t("pager.alignLeft")), mk("center", I18N.t("pager.alignCenter")), mk("right", I18N.t("pager.alignRight")), mk("justify", I18N.t("pager.alignJustify")));
     return () => group.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.align === get()));
   }
 

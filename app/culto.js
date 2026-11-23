@@ -41,22 +41,29 @@ function icon(name, size = 20) {
 }
 
 // ---------- diagrama dos livros ----------
-const ABBR = "Gn Êx Lv Nm Dt Js Jz Rt 1Sm 2Sm 1Rs 2Rs 1Cr 2Cr Ed Ne Et Jó Sl Pv Ec Ct Is Jr Lm Ez Dn Os Jl Am Ob Jn Mq Na Hc Sf Ag Zc Ml Mt Mc Lc Jo At Rm 1Co 2Co Gl Ef Fp Cl 1Ts 2Ts 1Tm 2Tm Tt Fm Hb Tg 1Pe 2Pe 1Jo 2Jo 3Jo Jd Ap".split(" ");
+// (os nomes são chaves de idioma, resolvidas com t() na hora de desenhar)
 const BOOK_TREE = [
-  { name: "Antigo Testamento", cls: "at", groups: [["Pentateuco", 0, 4], ["Históricos", 5, 16], ["Poéticos", 17, 21], ["Profetas maiores", 22, 26], ["Profetas menores", 27, 38]] },
-  { name: "Novo Testamento", cls: "nt", groups: [["Evangelhos", 39, 42], ["Histórico", 43, 43], ["Cartas de Paulo", 44, 56], ["Cartas gerais", 57, 64], ["Profético", 65, 65]] }
+  { name: "culto.tree.at", cls: "at", groups: [["culto.tree.pentateuch", 0, 4], ["culto.tree.historical", 5, 16], ["culto.tree.poetic", 17, 21], ["culto.tree.majorProphets", 22, 26], ["culto.tree.minorProphets", 27, 38]] },
+  { name: "culto.tree.nt", cls: "nt", groups: [["culto.tree.gospels", 39, 42], ["culto.tree.acts", 43, 43], ["culto.tree.paul", 44, 56], ["culto.tree.general", 57, 64], ["culto.tree.prophecy", 65, 65]] }
 ];
 
-// ---------- livros: nomes, siglas e apelidos ----------
-const ALIASES = BOOKS.map(b => new Set([norm(b[0]), norm(b[3])]));
-ALIASES[BOOKS.findIndex(b => b[3] === "sl")].add("sal").add("salmo");
-ALIASES[BOOKS.findIndex(b => b[3] === "jó")].add("job");
-ALIASES[BOOKS.findIndex(b => b[3] === "atos")].add("at");
-ALIASES[BOOKS.findIndex(b => b[3] === "ap")].add("apoc");
-ALIASES[BOOKS.findIndex(b => b[3] === "ct")].add("cantares").add("cantico");
+// ---------- livros: nomes, siglas e apelidos (de todos os idiomas: dá para digitar em qualquer um) ----------
+const ALIASES = BOOKS.map(() => new Set());
+const NAME_KEYS = BOOKS.map(() => new Set());
+BOOKS.forEach((b, i) => {
+  ALIASES[i].add(norm(b[3]));
+  for (const L of Object.values(BOOK_LANG)) {
+    NAME_KEYS[i].add(norm(L.names[i])); ALIASES[i].add(norm(L.names[i])); ALIASES[i].add(norm(L.abbr[i]));
+    for (const x of (L.extra && L.extra[b[3]]) || []) ALIASES[i].add(norm(x));
+  }
+});
 
 function resolveBook(token) {
   const raw = token.trim().toLowerCase().replace(/\s+/g, "");
+  // 1º: nomes, siglas e apelidos do idioma atual, exatamente como digitados ("jn" = John em inglês, Jonas em português)
+  const L = BOOK_LANG[I18N.lang] || BOOK_LANG.pt;
+  const curExact = BOOKS.findIndex((b, i) => [L.names[i], L.abbr[i], ...((L.extra || {})[b[3]] || [])].some(x => x.toLowerCase().replace(/\s+/g, "") === raw));
+  if (curExact >= 0) return { ok: curExact };
   const exactSlug = BOOKS.findIndex(b => b[3] === raw);   // "jo" = João, "jó" = Jó
   if (exactSlug >= 0) return { ok: exactSlug };
   const tn = norm(token);
@@ -64,7 +71,7 @@ function resolveBook(token) {
   const exact = BOOKS.findIndex((_, i) => ALIASES[i].has(tn));
   if (exact >= 0) return { ok: exact };
   if (tn.length >= 2) {
-    const pref = BOOKS.map((b, i) => i).filter(i => norm(BOOKS[i][0]).startsWith(tn));
+    const pref = BOOKS.map((b, i) => i).filter(i => [...NAME_KEYS[i]].some(n => n.startsWith(tn)));
     if (pref.length === 1) return { ok: pref[0] };
     if (pref.length > 1) return { many: pref };
   }
@@ -118,11 +125,11 @@ function renderTabs() {
   box.replaceChildren();
   let dragId = null;
   items.forEach((it, idx) => {
-    const t = document.createElement("span");
-    t.className = "tab" + (it.id === activeId ? " active" : "");
-    t.draggable = true;
-    t.title = "Arraste para mudar a ordem (ou Alt + ← →)";
-    const label = btn(itemRef(it), "tl", () => { setActive(it.id); const el = els.get(it.id); if (document.body.dataset.view === "single") Pager.reset(); else Pager.reveal(el); }, "Mostrar este trecho");
+    const tab = document.createElement("span");
+    tab.className = "tab" + (it.id === activeId ? " active" : "");
+    tab.draggable = true;
+    tab.title = t("culto.tab.drag");
+    const label = btn(itemRef(it), "tl", () => { setActive(it.id); const el = els.get(it.id); if (document.body.dataset.view === "single") Pager.reset(); else Pager.reveal(el); }, t("culto.tab.show"));
     label.onkeydown = e => {
       if (e.altKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
         e.preventDefault();
@@ -131,42 +138,43 @@ function renderTabs() {
         nb && nb.querySelector(".tl").focus();
       }
     };
-    const mvL = btn("‹", "mv", () => moveItem(it.id, idx - 1), "Mover para a esquerda");
-    const mvR = btn("›", "mv", () => moveItem(it.id, idx + 1), "Mover para a direita");
+    const mvL = btn("‹", "mv", () => moveItem(it.id, idx - 1), t("culto.tab.moveLeft"));
+    const mvR = btn("›", "mv", () => moveItem(it.id, idx + 1), t("culto.tab.moveRight"));
     mvL.disabled = idx === 0; mvR.disabled = idx === items.length - 1;
-    t.append(mvL, label, mvR, btn("✕", "tx", () => removeItem(it.id), "Remover este trecho"));
+    tab.append(mvL, label, mvR, btn("✕", "tx", () => removeItem(it.id), t("culto.tab.remove")));
     const clear = () => box.querySelectorAll(".tab").forEach(x => x.classList.remove("drop-before", "drop-after"));
-    t.addEventListener("dragstart", e => { dragId = it.id; e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", it.id); t.classList.add("dragging"); });
-    t.addEventListener("dragend", () => { dragId = null; t.classList.remove("dragging"); clear(); });
-    t.addEventListener("dragover", e => {
+    tab.addEventListener("dragstart", e => { dragId = it.id; e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", it.id); tab.classList.add("dragging"); });
+    tab.addEventListener("dragend", () => { dragId = null; tab.classList.remove("dragging"); clear(); });
+    tab.addEventListener("dragover", e => {
       if (!dragId || dragId === it.id) return;
       e.preventDefault();
-      const r = t.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
-      clear(); t.classList.add(after ? "drop-after" : "drop-before");
+      const r = tab.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
+      clear(); tab.classList.add(after ? "drop-after" : "drop-before");
     });
-    t.addEventListener("drop", e => {
+    tab.addEventListener("drop", e => {
       if (!dragId || dragId === it.id) return;
       e.preventDefault();
-      const r = t.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
+      const r = tab.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
       const from = items.findIndex(i => i.id === dragId);
       let to = items.findIndex(i => i.id === it.id) + (after ? 1 : 0);
       if (from < to) to--;
       clear(); moveItem(dragId, to);
     });
-    box.append(t);
+    box.append(tab);
   });
+  syncNext();
 }
 
 // ---------- selo: a versão atual está no aparelho? ----------
 async function updateBadge() {
-  const cr = $("#credit"); if (cr) cr.textContent = version.credit || (version.third ? "Texto de terceiros baixado pelo usuário." : "");
+  const cr = $("#credit"); if (cr) cr.textContent = version.credit || (version.third ? t("culto.credit.third") : "");
   const [st0, off] = [await localStatus(version), await isOfflineOnly()];
   const st = st0 || (version.bundled ? { verses: 1 } : null);
   const b = $("#offbadge");
   b.className = "badge " + (st ? "ok" : "warn");
-  b.textContent = st ? "● offline ✓" : off ? "⚠ versão não baixada" : "○ precisa de internet na 1ª vez";
-  b.title = st ? "Esta versão está guardada neste aparelho e funciona sem internet."
-              : "Baixe a versão em Configurações › Textos offline para usar sem internet.";
+  b.textContent = st ? t("culto.badge.ok") : off ? t("culto.badge.notDownloaded") : t("culto.badge.needsNet");
+  b.title = st ? t("culto.badge.okTip")
+              : t("culto.badge.warnTip");
 }
 
 // ---------- dados ----------
@@ -218,18 +226,18 @@ function renderCard(it) {
   top.className = "cardtop";
   const kicker = document.createElement("div");
   kicker.className = "kicker";
-  kicker.textContent = [version.short, d ? "fonte: " + d.source : ""].filter(Boolean).join(" · ");
+  kicker.textContent = [version.short, d ? t("culto.card.source", { s: d.source }) : ""].filter(Boolean).join(" · ");
   top.append(kicker);
   const g = gIndex(it.book, it.chapter);
-  const prev = btn("◀", "", () => moveChapter(it, -1), "Capítulo anterior");
-  const next = btn("▶", "", () => moveChapter(it, 1), "Capítulo seguinte");
+  const prev = btn("◀", "", () => moveChapter(it, -1), t("culto.card.prevChapter"));
+  const next = btn("▶", "", () => moveChapter(it, 1), t("culto.card.nextChapter"));
   prev.disabled = g <= 0;
   next.disabled = g >= CHAPTERS.length - 1;
-  const vb = btn("", "ico", () => { setActive(it.id); openPicker("edit", "verse"); }, "Escolher os versículos deste trecho");
-  vb.setAttribute("aria-label", "Escolher os versículos"); vb.append(icon("grid", 16));
+  const vb = btn("", "ico", () => { setActive(it.id); openPicker("edit", "verse"); }, t("culto.card.pickVerses"));
+  vb.setAttribute("aria-label", t("culto.card.pickVersesAria")); vb.append(icon("grid", 16));
   top.append(vb, prev, next);
-  if (range) top.append(btn(it.showAll ? "Só o trecho" : "Mostrar o capítulo", "", () => { it.showAll = !it.showAll; redrawCard(it.id); persist(); }));
-  top.append(btn("✕", "x", () => removeItem(it.id), "Remover este trecho"));
+  if (range) top.append(btn(it.showAll ? t("culto.card.onlyRange") : t("culto.card.showChapter"), "", () => { it.showAll = !it.showAll; redrawCard(it.id); persist(); }));
+  top.append(btn("✕", "x", () => removeItem(it.id), t("culto.card.remove")));
 
   const h1 = document.createElement("h1");
   h1.textContent = itemRef(it);
@@ -239,12 +247,12 @@ function renderCard(it) {
     const box = document.createElement("div");
     box.className = "error";
     box.textContent = err.message || String(err);
-    box.append(document.createElement("br"), btn("Tentar de novo", "", () => loadCard(it)));
+    box.append(document.createElement("br"), btn(t("culto.card.retry"), "", () => loadCard(it)));
     sec.append(box);
   } else if (!d) {
     const p = document.createElement("p");
     p.className = "status";
-    p.textContent = "Carregando…";
+    p.textContent = t("culto.card.loading");
     sec.append(p);
   } else {
     const wrap = document.createElement("div");
@@ -252,6 +260,7 @@ function renderCard(it) {
     let firstHl = null;
     d.verses.forEach(v => {
       const inR = range && v.n >= it.s && v.n <= it.e;
+      if (!v.text) return;   // versículo omitido nesta edição
       if (range && !it.showAll && !inR) return;
       if (v.heading && (!range || it.showAll)) { const hh = document.createElement("h2"); hh.textContent = v.heading; wrap.append(hh); }
       const sp = document.createElement("span");
@@ -276,6 +285,7 @@ function redrawCard(id) {
   old.replaceWith(nw);
   els.set(id, nw);
   if (nw._firstHl) Pager.reveal(nw._firstHl);
+  syncNext();
 }
 
 function updateEmpty() {
@@ -285,7 +295,7 @@ function updateEmpty() {
       e = document.createElement("p");
       e.id = "emptyHint";
       e.className = "empty-hint";
-      e.textContent = "Nenhum trecho aberto. Digite uma passagem acima (ex.: jo 1:2-4) ou escolha pelo seletor. Cada passagem vira um cartão, e você pode remover os que não precisar.";
+      e.textContent = t("culto.empty.hint");
       $("#content").append(e);
     }
   } else if (e) e.remove();
@@ -342,7 +352,7 @@ function removeItem(id) {
   renderPicker();
   renderTabs();
   persist();
-  msg(`Removido: ${itemRef(it)}`, false, [{ label: "Desfazer", fn: undoRemove }]);
+  msg(t("culto.msg.removed", { ref: itemRef(it) }), false, [{ label: t("culto.msg.undo"), fn: undoRemove }]);
 }
 
 function undoRemove() {
@@ -385,17 +395,22 @@ const snapshot = () => items.map(({ book, chapter, s, e, showAll }) => ({ book, 
 
 function newList() {
   if (pickMode) closePicker();
-  if (!items.length) { msg("A lista já está vazia."); return; }
+  if (!items.length) { msg(t("culto.msg.alreadyEmpty")); return; }
   const before = snapshot();
   setList([]);
   closePanel();
-  msg("Lista nova.", false, [{ label: "Desfazer", fn: () => { setList(before); msg(""); } }]);
+  msg(t("culto.msg.newList"), false, [{ label: t("culto.msg.undo"), fn: () => { setList(before); msg(""); } }]);
 }
 
 // ---------- guardar e ler ----------
-const FOLDERS = [["Cultos", "Cul"], ["Devocionais", "Dev"], ["Estudos", "Est"], ["Outros", "Out"]];
+// pastas: o que fica guardado é um id estável (cultos, devocionais...), o nome aparece no idioma atual.
+// Gravações antigas, que guardavam o nome em português, são convertidas ao ler.
+const FOLDERS = ["cultos", "devocionais", "estudos", "outros"];
+const LEGACY_FOLDER = { Cultos: "cultos", Devocionais: "devocionais", Estudos: "estudos", Outros: "outros" };
+const folderName = id => t("culto.folder." + id);
+const folderAbbr = id => t("culto.folder." + id + ".abbr");
 const ansiDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-const getSaved = async () => { const r = await chrome.storage.local.get("cultoSaved"); return Array.isArray(r.cultoSaved) ? r.cultoSaved : []; };
+const getSaved = async () => { const r = await chrome.storage.local.get("cultoSaved"); return Array.isArray(r.cultoSaved) ? r.cultoSaved.map(x => ({ ...x, folder: LEGACY_FOLDER[x.folder] || x.folder })) : []; };
 const putSaved = list => chrome.storage.local.set({ cultoSaved: list });
 let panelMode = null;
 
@@ -404,20 +419,20 @@ function closePanel() { panelMode = null; $("#panel").hidden = true; $("#panel")
 function openSavePanel() {
   if (pickMode) closePicker();
   if (panelMode === "save") return closePanel();
-  if (!items.length) { msg("Abra ao menos uma passagem antes de guardar."); return; }
+  if (!items.length) { msg(t("culto.save.needOne")); return; }
   panelMode = "save";
   const p = $("#panel"); p.hidden = false; p.replaceChildren();
   const row = document.createElement("div"); row.className = "prow";
   const sel = document.createElement("select");
-  FOLDERS.forEach(([n]) => sel.add(new Option(n, n)));
+  FOLDERS.forEach(id => sel.add(new Option(folderName(id), id)));
   const name = document.createElement("input"); name.type = "text"; name.maxLength = 60;
-  const abbrOf = () => FOLDERS.find(f => f[0] === sel.value)[1];
+  const abbrOf = () => folderAbbr(sel.value);
   const stdName = () => `${abbrOf()} ${ansiDate()}`;
   let edited = false;
   name.value = stdName();
   name.oninput = () => { edited = true; };
   sel.onchange = () => { if (!edited) name.value = stdName(); };
-  const ok = btn("Guardar", "primary", async () => {
+  const ok = btn(t("culto.save.ok"), "primary", async () => {
     const nm = name.value.trim() || stdName();
     const list = await getSaved();
     const i = list.findIndex(x => x.folder === sel.value && x.name === nm);
@@ -425,10 +440,10 @@ function openSavePanel() {
     i >= 0 ? (list[i] = rec) : list.push(rec);
     await putSaved(list);
     closePanel();
-    msg(`${i >= 0 ? "Atualizado" : "Guardado"} em ${sel.value}: “${nm}” (${items.length} ${items.length === 1 ? "passagem" : "passagens"}).`);
+    msg(t(i >= 0 ? "culto.save.updated" : "culto.save.saved", { folder: folderName(sel.value), name: nm, count: t("culto.save.count", { n: items.length }) }));
   });
   name.onkeydown = e => { if (e.key === "Enter") ok.click(); if (e.key === "Escape") closePanel(); };
-  row.append(el_("span", "Pasta"), sel, el_("span", "Nome"), name, ok, btn("Cancelar", "", closePanel));
+  row.append(el_("span", t("culto.save.folder")), sel, el_("span", t("culto.save.name")), name, ok, btn(t("culto.save.cancel"), "", closePanel));
   p.append(row);
   Pager.layout();
   name.focus(); name.select();
@@ -445,32 +460,41 @@ async function openReadPanel() {
 async function drawReadPanel() {
   const p = $("#panel"); p.replaceChildren();
   const list = await getSaved();
-  if (!list.length) { p.append(el_("div", "Nada guardado ainda. Abra passagens e use “Guardar”.")); p.lastChild.className = "none"; Pager.layout(); return; }
-  FOLDERS.forEach(([folder]) => {
+  if (!list.length) { p.append(el_("div", t("culto.read.none"))); p.lastChild.className = "none"; Pager.layout(); return; }
+  FOLDERS.forEach(folder => {
     const mine = list.filter(x => x.folder === folder).sort((a, b) => b.savedAt - a.savedAt);
     if (!mine.length) return;
-    p.append(el_("h5", folder));
+    p.append(el_("h5", folderName(folder)));
     mine.forEach(rec => {
       const r = document.createElement("div"); r.className = "srow";
       const o = btn(rec.name, "nm", () => {
         const before = snapshot();
         setList(rec.items);
         closePanel();
-        msg(`Aberto: “${rec.name}”.`, false, before.length ? [{ label: "Desfazer", fn: () => { setList(before); msg(""); } }] : []);
-      }, "Abrir estas passagens (substitui as atuais)");
+        msg(t("culto.read.opened", { name: rec.name }), false, before.length ? [{ label: t("culto.msg.undo"), fn: () => { setList(before); msg(""); } }] : []);
+      }, t("culto.read.openTip"));
       const sm = el_("small", rec.items.map(i => itemRef(i)).join(" · "));
       const del = btn("✕", "tx", async () => {
-        if (!confirm(`Excluir “${rec.name}”?`)) return;
+        if (!confirm(t("culto.read.confirmDelete", { name: rec.name }))) return;
         await putSaved((await getSaved()).filter(x => x.id !== rec.id));
         drawReadPanel();
-      }, "Excluir esta gravação");
+      }, t("culto.read.deleteTip"));
       r.append(o, sm, del); p.append(r);
     });
   });
   Pager.layout();
 }
 
-function moveChapter(it, d) {
+// no fim da leitura de um capítulo inteiro, o botão "Próxima" vira "Próximo capítulo ›" e a passagem passa a ser o capítulo seguinte
+function syncNext() {
+  const it = activeItem();
+  const whole = it && (!it.s || it.showAll);
+  const can = !!whole && prefs.view !== "all" && !!CHAPTERS[gIndex(it.book, it.chapter) + 1];
+  Pager.hooks.next = can ? () => moveChapter(it, 1, true) : null;
+  Pager.refreshBar();
+}
+
+function moveChapter(it, d, fromEnd) {
   const g = gIndex(it.book, it.chapter) + d;
   if (!CHAPTERS[g]) return;
   it.book = CHAPTERS[g].book;
@@ -479,7 +503,7 @@ function moveChapter(it, d) {
   it.showAll = false;
   redrawCard(it.id);
   setActive(it.id);
-  loadCard(it).then(persist);
+  loadCard(it).then(() => { persist(); if (fromEnd) Pager.reset(); syncNext(); });
   renderTabs();
 }
 
@@ -519,27 +543,27 @@ function renderPicker() {
   const head = document.createElement("div"); head.className = "pkh";
   const title = document.createElement("h2");
   const sp = document.createElement("span"); sp.className = "sp";
-  const close = btn("✕", "", closePicker, "Fechar (Esc)");
+  const close = btn("✕", "", closePicker, t("culto.pick.closeTip"));
 
   if (pickMode === "new" && step === "book") {
-    title.textContent = "Nova passagem · escolha o livro";
+    title.textContent = t("culto.pick.newBook");
     head.append(title, sp, close); inn.append(head);
     const diag = document.createElement("div"); diag.className = "bdiag";
-    const bt = document.createElement("div"); bt.className = "bt"; bt.textContent = "Bíblia · 66 livros";
+    const bt = document.createElement("div"); bt.className = "bt"; bt.textContent = t("culto.pick.bibleTitle");
     diag.append(bt);
     const tst = document.createElement("div"); tst.className = "tst";
-    BOOK_TREE.forEach(t => {
-      const tb = document.createElement("div"); tb.className = "t " + t.cls;
+    BOOK_TREE.forEach(tr => {
+      const tb = document.createElement("div"); tb.className = "t " + tr.cls;
       const h = document.createElement("h3"); const n = document.createElement("span");
-      h.append(t.name, n); n.textContent = t.groups.reduce((x, g) => x + g[2] - g[1] + 1, 0) + " livros";
+      h.append(t(tr.name), n); n.textContent = t("culto.pick.booksCount", { n: tr.groups.reduce((x, g) => x + g[2] - g[1] + 1, 0) });
       const gs = document.createElement("div"); gs.className = "gs";
-      t.groups.forEach(([gt, a0, b0]) => {
+      tr.groups.forEach(([gt, a0, b0]) => {
         const sg = document.createElement("div"); sg.className = "sg";
-        const h4 = document.createElement("h4"); h4.textContent = gt;
+        const h4 = document.createElement("h4"); h4.textContent = t(gt);
         const bs = document.createElement("div"); bs.className = "bs";
         for (let i = a0; i <= b0; i++) {
           const b = btn("", "bk", () => { cur = { book: i, chapter: null }; step = "chapter"; renderPicker(); }, BOOKS[i][0]);
-          const ab = document.createElement("b"); ab.textContent = ABBR[i];
+          const ab = document.createElement("b"); ab.textContent = I18N.abbr()[i];
           const nm = document.createElement("small"); nm.textContent = BOOKS[i][0];
           b.append(ab, nm); bs.append(b);
         }
@@ -553,10 +577,10 @@ function renderPicker() {
   }
 
   if (pickMode === "new") {          // step === "chapter"
-    title.textContent = `Nova passagem · ${BOOKS[cur.book][0]}`;
+    title.textContent = t("culto.pick.newBookName", { book: BOOKS[cur.book][0] });
     const hint = document.createElement("span"); hint.className = "hint";
-    hint.textContent = "Toque no capítulo.";
-    head.append(btn("‹ Livros", "", () => { step = "book"; renderPicker(); }), title, hint, sp, close); inn.append(head);
+    hint.textContent = t("culto.pick.tapChapter");
+    head.append(btn(t("culto.pick.backBooks"), "", () => { step = "book"; renderPicker(); }), title, hint, sp, close); inn.append(head);
     const g = document.createElement("div"); g.className = "grid nums";
     for (let c = 1; c <= BOOKS[cur.book][2]; c++) g.append(btn(String(c), "", () => { pickMode = "edit"; addItem(cur.book, c); }));
     inn.append(g);
@@ -565,12 +589,12 @@ function renderPicker() {
   }
 
   // pickMode === "edit": ajusta os versículos da passagem ativa
-  title.textContent = `Ajustar versículos · ${BOOKS[a.book][0]} ${a.chapter}`;
+  title.textContent = t("culto.pick.editTitle", { book: BOOKS[a.book][0], chapter: a.chapter });
   const hint = document.createElement("span"); hint.className = "hint";
-  hint.textContent = "Toque o 1º versículo e depois o último (o mesmo duas vezes = só ele).";
+  hint.textContent = t("culto.pick.editHint");
   head.append(title, hint, sp,
-    btn("Capítulo inteiro", a.s == null ? "on" : "", () => { a.s = a.e = null; a.showAll = false; awaitingEnd = false; redrawCard(a.id); renderTabs(); persist(); closePicker(); }),
-    btn("Concluir", "primary", closePicker), close);
+    btn(t("culto.pick.wholeChapter"), a.s == null ? "on" : "", () => { a.s = a.e = null; a.showAll = false; awaitingEnd = false; redrawCard(a.id); renderTabs(); persist(); closePicker(); }),
+    btn(t("culto.pick.done"), "primary", closePicker), close);
   inn.append(head);
   const d = mem.get(keyFor(a));
   if (d) {
@@ -581,7 +605,7 @@ function renderPicker() {
       g.append(btn(String(v.n), edge ? "on" : inRange ? "in" : "", () => pickVerse(v.n)));
     });
     inn.append(g);
-  } else { const w = document.createElement("p"); w.className = "hint"; w.textContent = "Carregando os versículos…"; inn.append(w); }
+  } else { const w = document.createElement("p"); w.className = "hint"; w.textContent = t("culto.pick.loadingVerses"); inn.append(w); }
   box.replaceChildren(inn);
 }
 function pickVerse(n) {
@@ -613,21 +637,21 @@ function submitQuery() {
   const q = $("#q").value;
   if (!q.trim()) return;
   const p = parseQuery(q);
-  if (!p) return msg("Não entendi. Tente algo como: jo 1:2-4", true);
+  if (!p) return msg(t("culto.q.unclear"), true);
   const r = resolveBook(p.book);
-  if (r.none) return msg(`Livro "${p.book}" não encontrado.`, true);
-  if (r.many) return msg("Qual livro?", false, r.many.map(i => ({
+  if (r.none) return msg(t("culto.q.notFound", { book: p.book }), true);
+  if (r.many) return msg(t("culto.q.which"), false, r.many.map(i => ({
     label: BOOKS[i][0],
     fn: () => { $("#q").value = BOOKS[i][3] + (p.chapter ? " " + p.chapter + (p.vs ? ":" + p.vs + (p.ve ? "-" + p.ve : "") : "") : ""); submitQuery(); }
   })));
   const book = r.ok;
   msg("");
   if (!p.chapter) { cur = { book, chapter: null }; openPicker("new", "chapter"); return; }
-  if (p.chapter < 1 || p.chapter > BOOKS[book][2]) return msg(`${BOOKS[book][0]} tem ${BOOKS[book][2]} capítulo(s).`, true);
+  if (p.chapter < 1 || p.chapter > BOOKS[book][2]) return msg(t("culto.q.chapters", { book: BOOKS[book][0], n: BOOKS[book][2] }), true);
   closePicker();
   addItem(book, p.chapter, p.vs, p.ve).then(it => {
     const d = mem.get(keyFor(it));
-    if (d && p.vs && p.vs > d.verses.length) msg(`${BOOKS[book][0]} ${p.chapter} tem ${d.verses.length} versículos.`, true);
+    if (d && p.vs && p.vs > d.verses.length) msg(t("culto.q.verses", { book: BOOKS[book][0], chapter: p.chapter, n: d.verses.length }), true);
   });
   $("#q").select();
 }
@@ -639,6 +663,9 @@ function reloadAll() {
 }
 
 (async function init() {
+  await I18N.ready;
+  I18N.apply();
+  document.title = t("culto.title");
   await loadPrefs();
   version = await loadVersion();
   VERSIONS.forEach(v => $("#version").add(new Option(v.label, v.id)));
@@ -661,6 +688,7 @@ function reloadAll() {
     prefs.view = e.target.checked ? "all" : "single";
     applyPrefs(); savePrefs();
     Pager.reveal(els.get(activeId));
+    syncNext();
   };
   alignRefresh = Pager.buildAlign($("#alignGroup"), () => prefs.align, v => { prefs.align = v; applyPrefs(); savePrefs(); });
   alignRefresh();

@@ -14,6 +14,24 @@ function el(tag, cls, text) {
   if (text != null) e.textContent = text;
   return e;
 }
+// texto traduzível com marcação simples: **negrito**, __itálico__, [texto](https://link) e {he:hebraico}; sem innerHTML
+function orich(node, text) {
+  const out = [], re = /\*\*(.+?)\*\*|__(.+?)__|\[(.+?)\]\((https?:[^)\s]+)\)|\{he:(.+?)\}/g;
+  let last = 0, m;
+  while ((m = re.exec(text))) {
+    if (m.index > last) out.push(document.createTextNode(text.slice(last, m.index)));
+    let e;
+    if (m[1] != null) { e = document.createElement("b"); e.textContent = m[1]; }
+    else if (m[2] != null) { e = document.createElement("i"); e.textContent = m[2]; }
+    else if (m[3] != null) { e = document.createElement("a"); e.textContent = m[3]; e.href = m[4]; e.target = "_blank"; e.rel = "noopener"; }
+    else { e = document.createElement("span"); e.lang = "he"; e.dir = "rtl"; e.textContent = m[5]; }
+    out.push(e); last = re.lastIndex;
+  }
+  if (last < text.length) out.push(document.createTextNode(text.slice(last)));
+  node.replaceChildren(...out);
+}
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const E = (k, p) => esc(I18N.t(k, p));   // frase já escapada, para montar HTML fixo com setHTML
 function setStatus(msg, err) {
   $("status").textContent = msg;
   $("status").className = err ? "err" : "";
@@ -21,16 +39,16 @@ function setStatus(msg, err) {
 let saveTimer = null;
 // Salva sozinho logo depois de qualquer alteração (o botão "Salvar agora" continua disponível)
 function setDirty() {
-  setStatus("Salvando…");
+  setStatus(I18N.t("options.saving"));
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => save({ auto: true }), 600);
 }
-const hhmm = () => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+const hhmm = () => new Date().toLocaleTimeString(I18N.locale, { hour: "2-digit", minute: "2-digit" });
 
 // ---------- rascunho ----------
 function makeDraft(plan) {
   const p = plan ? clone(plan) : { tracks: [] };
-  const main = p.tracks.find(t => t.role === "main") || p.tracks[0] || newTrack({ name: "Bíblia", role: "main" });
+  const main = p.tracks.find(t => t.role === "main") || p.tracks[0] || newTrack({ name: I18N.t("options.defaultTrackName"), role: "main" });
   const sec = p.tracks.filter(t => t !== main);
   const pool = {};
   sec.forEach(t => (pool[keyOf(t.books)] = t));
@@ -72,10 +90,10 @@ function renderTemplates() {
   box.replaceChildren();
   TEMPLATES.forEach(tpl => {
     const c = el("div", "tpl");
-    const use = el("button", "primary", "Usar este plano");
+    const use = el("button", "primary", I18N.t("options.useTemplate"));
     use.onclick = () => {
       if ((draft.main.pos > 0 || draft.secTracks.some(t => t.pos > 0)) &&
-          !confirm("Substituir o plano atual por este modelo? O progresso atual será perdido ao salvar.")) return;
+          !confirm(I18N.t("options.confirmReplacePlan"))) return;
       draft = makeDraft({ tracks: tpl.build() });
       renderAll(); setDirty();
       $("mainSection").scrollIntoView({ behavior: "smooth" });
@@ -90,12 +108,12 @@ function mountPosition(t, root, after) {
   const bookSel = root.querySelector(".f-book"), chapSel = root.querySelector(".f-chap"), posEl = root.querySelector(".f-pos");
   const text = () => {
     const chs = trackChapters(t);
-    posEl.textContent = !chs.length ? "—" : t.pos >= chs.length ? "trilha concluída" : `${lab(chs[t.pos])} (${t.pos + 1} de ${chs.length})`;
+    posEl.textContent = !chs.length ? "—" : t.pos >= chs.length ? I18N.t("options.trackDone") : I18N.t("options.posText", { label: lab(chs[t.pos]), pos: t.pos + 1, total: chs.length });
   };
   const fillChaps = () => {
     chapSel.replaceChildren();
     if (!bookSel.options.length) return;
-    for (let c = 1; c <= BOOKS[+bookSel.value][2]; c++) chapSel.add(new Option("Cap. " + c, c));
+    for (let c = 1; c <= BOOKS[+bookSel.value][2]; c++) chapSel.add(new Option(I18N.t("options.chapShort", { n: c }), c));
   };
   const fill = () => {
     bookSel.replaceChildren();
@@ -117,9 +135,9 @@ function mountPosition(t, root, after) {
   return fill;
 }
 
-const POSITION_HTML = `
-  <div class="trow"><span>Próximo capítulo a ler:</span><b class="f-pos"></b></div>
-  <div class="trow"><select class="f-book"></select><select class="f-chap"></select><button class="f-setpos">Definir posição</button></div>`;
+const positionHTML = () => `
+  <div class="trow"><span>${E("options.nextToRead")}</span><b class="f-pos"></b></div>
+  <div class="trow"><select class="f-book"></select><select class="f-chap"></select><button class="f-setpos">${E("options.setPos")}</button></div>`;
 
 // ---------- trilha principal ----------
 function renderMain() {
@@ -128,24 +146,24 @@ function renderMain() {
   box.replaceChildren();
   const wrap = el("div", "track");
   setHTML(wrap, `
-    <label>Nome da trilha <input class="f-name" maxlength="40"></label>
-    <label>O que ler <select class="f-scope"></select></label>
+    <label>${E("options.trackName")} <input class="f-name" maxlength="40"></label>
+    <label>${E("options.whatToRead")} <select class="f-scope"></select></label>
     <div class="books" hidden></div>
-    <label class="f-orderrow">Ordem de leitura
+    <label class="f-orderrow">${E("options.order")}
       <select class="f-order">
-        <option value="canon">Canônica (do primeiro ao último livro)</option>
-        <option value="parallel">Antigo e Novo Testamento em paralelo (intercalados)</option>
+        <option value="canon">${E("options.orderCanon")}</option>
+        <option value="parallel">${E("options.orderParallel")}</option>
       </select></label>
-    <fieldset class="pace"><legend>Ritmo</legend>
-      <label class="inl"><input type="radio" class="f-mode-perday"> <input type="number" class="f-n" min="1" max="50"> capítulo(s) por dia</label>
-      <label class="inl"><input type="radio" class="f-mode-finish"> Terminar em <input type="number" class="f-num" min="1" max="999">
-        <select class="f-unit"><option value="d">dias</option><option value="m">meses</option><option value="y">anos</option></select></label>
+    <fieldset class="pace"><legend>${E("options.pace")}</legend>
+      <label class="inl"><input type="radio" class="f-mode-perday"> <input type="number" class="f-n" min="1" max="50"> ${E("options.chPerDay")}</label>
+      <label class="inl"><input type="radio" class="f-mode-finish"> ${E("options.finishIn")} <input type="number" class="f-num" min="1" max="999">
+        <select class="f-unit"><option value="d">${E("options.unitDays")}</option><option value="m">${E("options.unitMonths")}</option><option value="y">${E("options.unitYears")}</option></select></label>
       <div class="f-preview"></div>
     </fieldset>
-    <label class="inl"><input type="checkbox" class="f-loop"> Ao terminar, recomeçar do início (loop)</label>
-    <div class="trow"><span>Dias de leitura:</span><span class="f-days trow"></span></div>
-    ${POSITION_HTML}
-    <div class="trow"><button class="f-reset">Reiniciar trilha</button></div>`);
+    <label class="inl"><input type="checkbox" class="f-loop"> ${E("options.loop")}</label>
+    <div class="trow"><span>${E("options.readDays")}</span><span class="f-days trow"></span></div>
+    ${positionHTML()}
+    <div class="trow"><button class="f-reset">${E("options.resetTrack")}</button></div>`);
   box.append(wrap);
   const q = s => wrap.querySelector(s);
 
@@ -155,7 +173,7 @@ function renderMain() {
   // escopo
   const sel = q(".f-scope");
   SCOPE_PRESETS.forEach(p => sel.add(new Option(p.label, p.id)));
-  sel.add(new Option("Personalizado (escolher livros)", "custom"));
+  sel.add(new Option(I18N.t("options.scopeCustom"), "custom"));
   const preset = SCOPE_PRESETS.find(p => p.books.join() === t.books.join());
   sel.value = t._custom || !preset ? "custom" : preset.id;
   sel.onchange = () => {
@@ -169,7 +187,7 @@ function renderMain() {
   q(".f-orderrow").hidden = !both;
   q(".f-order").value = t.order || "canon";
   q(".f-order").onchange = e => {
-    if (t.pos > 0 && !confirm("Mudar a ordem reinicia a trilha no primeiro capítulo. Continuar?")) { e.target.value = t.order; return; }
+    if (t.pos > 0 && !confirm(I18N.t("options.confirmOrder"))) { e.target.value = t.order; return; }
     t.order = e.target.value; t.pos = 0;
     fillPos(); updPreview(); setDirty();
   };
@@ -216,7 +234,7 @@ function renderMain() {
   [rP, rF, nIn, numIn, unitSel, loopCb].forEach(x => (x.onchange = readPace));
 
   // dias da semana (valem também para a trilha secundária)
-  WEEK_NAMES.forEach((nm, d) => {
+  WEEK_ALL.forEach(d => { const nm = weekName(d);
     const l = el("label", "dow");
     const cb = el("input");
     cb.type = "checkbox";
@@ -228,21 +246,21 @@ function renderMain() {
 
   function updPreview() {
     const chs = trackChapters(t), rem = Math.max(0, chs.length - t.pos), out = q(".f-preview");
-    if (!t.weekdays.length) { out.textContent = "Marque pelo menos um dia de leitura."; return; }
+    if (!t.weekdays.length) { out.textContent = I18N.t("options.markADay"); return; }
     if (t.pace.mode === "finishIn") {
       const end = addDays(todayStr(), t.pace.days - 1);
       const sched = scheduledDaysBetween(t, todayStr(), end);
-      out.textContent = `≈ ${(rem / Math.max(1, sched)).toFixed(1).replace(".", ",")} capítulos por dia de leitura (${rem} capítulos em ${sched} dias). Término até ${fmtDate(end)}.`;
+      out.textContent = I18N.t("options.previewFinish", { perDay: (rem / Math.max(1, sched)).toLocaleString(I18N.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }), rem, sched, end: fmtDate(end) });
     } else if (t.loop) {
-      out.textContent = `Um ciclo completo (${chs.length} capítulos) leva ≈ ${Math.ceil(chs.length / t.pace.n)} dias de leitura.`;
+      out.textContent = I18N.t("options.previewLoop", { len: chs.length, days: Math.ceil(chs.length / t.pace.n) });
     } else {
       const est = finishEstimate(t);
-      out.textContent = est ? `Previsão de término: ${fmtDate(est)}.` : "";
+      out.textContent = est ? I18N.t("options.previewEnd", { date: fmtDate(est) }) : "";
     }
   }
 
   q(".f-reset").onclick = () => {
-    if (!confirm(`Reiniciar a trilha "${t.name}" do começo?`)) return;
+    if (!confirm(I18N.t("options.confirmResetTrack", { name: t.name }))) return;
     t.pos = 0; t.cycles = 0; t.history = []; t.todayDone = 0;
     fillPos(); updPreview(); setDirty();
   };
@@ -256,18 +274,18 @@ function renderSec() {
   box.replaceChildren();
   const wrap = el("div", "track");
   setHTML(wrap, `
-    <label class="inl"><input type="checkbox" class="s-on"> Ler também uma trilha secundária</label>
+    <label class="inl"><input type="checkbox" class="s-on"> ${E("options.secOn")}</label>
     <div class="s-body" hidden>
-      <div class="chips">Atalhos:
-        <button class="s-chip" data-b="18">Salmos</button>
-        <button class="s-chip" data-b="19">Provérbios</button>
-        <button class="s-chip" data-b="18,19">Salmos e Provérbios</button>
+      <div class="chips">${E("options.shortcuts")}
+        <button class="s-chip" data-b="18">${esc(BOOKS[18][0])}</button>
+        <button class="s-chip" data-b="19">${esc(BOOKS[19][0])}</button>
+        <button class="s-chip" data-b="18,19">${E("options.chipBoth", { a: BOOKS[18][0], b: BOOKS[19][0] })}</button>
       </div>
       <div class="books"></div>
-      <label class="s-moderow">Como ler os livros escolhidos
+      <label class="s-moderow">${E("options.secHow")}
         <select class="s-mode">
-          <option value="parallel">Em paralelo: cada livro no seu ritmo (ex.: 1 Salmo + 1 Provérbio por dia)</option>
-          <option value="sequence">Em sequência: um livro depois do outro (ex.: Salmos 1 a 150, depois Provérbios 1 a 31)</option>
+          <option value="parallel">${E("options.secParallel")}</option>
+          <option value="sequence">${E("options.secSequence")}</option>
         </select></label>
       <label class="inl"><input type="number" class="s-n" min="1" max="20"> <span class="s-unit"></span></label>
       <div class="f-preview s-prev"></div>
@@ -312,7 +330,7 @@ function renderSec() {
   q(".s-mode").value = s.mode;
   q(".s-mode").onchange = e => { s.mode = e.target.value; rebuildSec(); setDirty(); renderSec(); };
   q(".s-n").value = s.n;
-  q(".s-unit").textContent = s.books.length > 1 && s.mode === "parallel" ? "capítulo(s) por dia de cada livro" : "capítulo(s) por dia";
+  q(".s-unit").textContent = s.books.length > 1 && s.mode === "parallel" ? I18N.t("options.chPerDayEach") : I18N.t("options.chPerDay");
   q(".s-n").onchange = e => {
     s.n = Math.min(20, Math.max(1, parseInt(e.target.value) || 1));
     e.target.value = s.n;
@@ -322,7 +340,7 @@ function renderSec() {
   function updSecPreview() {
     q(".s-prev").textContent = draft.secTracks.map(t => {
       const len = trackChapters(t).length;
-      return `${t.name}: ciclo de ${len} capítulos em ≈ ${Math.ceil(len / s.n)} dias de leitura`;
+      return I18N.t("options.secPreview", { name: t.name, len, days: Math.ceil(len / s.n) });
     }).join(" · ");
   }
   updSecPreview();
@@ -331,11 +349,11 @@ function renderSec() {
   const list = q(".s-tracks");
   draft.secTracks.forEach(t => {
     const row = el("div", "sectrack");
-    setHTML(row, `<h4></h4>${POSITION_HTML}<div class="trow"><button class="f-reset">Reiniciar</button></div>`);
-    row.querySelector("h4").textContent = t.name + (t.cycles ? ` · ciclo ${t.cycles + 1}` : "");
+    setHTML(row, `<h4></h4>${positionHTML()}<div class="trow"><button class="f-reset">${E("options.reset")}</button></div>`);
+    row.querySelector("h4").textContent = t.name + (t.cycles ? I18N.t("options.cycleSuffix", { n: t.cycles + 1 }) : "");
     const fill = mountPosition(t, row);
     row.querySelector(".f-reset").onclick = () => {
-      if (!confirm(`Reiniciar "${t.name}" do começo?`)) return;
+      if (!confirm(I18N.t("options.confirmReset", { name: t.name }))) return;
       t.pos = 0; t.cycles = 0; t.history = []; t.todayDone = 0;
       fill(); setDirty();
     };
@@ -353,10 +371,10 @@ async function save(opts = {}) {
   const secs = clone(draft.secTracks);
   delete main._custom;
   main.role = "main";
-  if (!main.name.trim()) main.name = "Bíblia";
-  if (!main.books.length) return fail("Trilha principal: escolha pelo menos um livro.");
-  if (!main.weekdays.length) return fail("Trilha principal: marque pelo menos um dia de leitura.");
-  if (draft.sec.enabled && !draft.sec.books.length) return fail("Trilha secundária: escolha pelo menos um livro.");
+  if (!main.name.trim()) main.name = I18N.t("options.defaultTrackName");
+  if (!main.books.length) return fail(I18N.t("options.errMainBooks"));
+  if (!main.weekdays.length) return fail(I18N.t("options.errMainDays"));
+  if (draft.sec.enabled && !draft.sec.books.length) return fail(I18N.t("options.errSecBooks"));
 
   const orig = saved && saved.tracks.find(o => o.id === main.id);
   if (main.pace.mode === "finishIn" && !(orig && orig.pace.mode === "finishIn" && orig.pace.days === main.pace.days)) {
@@ -378,22 +396,22 @@ async function save(opts = {}) {
   try {
     await savePlan(plan);
   } catch (e) {
-    return fail("Não foi possível salvar: " + (e.message || e));
+    return fail(I18N.t("options.errSave", { msg: e.message || e }));
   }
   saved = plan;
   if (opts.auto) {
     // salvamento automático: não recria a tela (o cursor não pode sair do campo em que você está digitando)
-    setStatus("Salvo automaticamente ✓ " + hhmm());
+    setStatus(I18N.t("options.savedAuto", { time: hhmm() }));
     return;
   }
   draft = makeDraft(plan);
   renderAll();
-  setStatus("Plano salvo ✓ " + hhmm());
+  setStatus(I18N.t("options.saved", { time: hhmm() }));
 }
 
 
 // ---------- textos offline ----------
-const fmtMB = b => (b / 1048576).toFixed(1).replace(".", ",") + " MB";
+const fmtMB = b => (b / 1048576).toLocaleString(I18N.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " MB";
 let importTarget = null;
 function setOffMsg(t, err) { const m = $("offMsg"); m.textContent = t || ""; m.style.color = err ? "#b00020" : ""; }
 
@@ -406,7 +424,7 @@ function fillVersionSelect() {
 
 async function downloadWithProgress(v, statusEl) {
   await downloadPack(v, (got, total) => {
-    statusEl.textContent = total ? `Baixando… ${Math.round(got / total * 100)}%` : `Baixando… ${fmtMB(got)}`;
+    statusEl.textContent = total ? I18N.t("options.downloadingPct", { pct: Math.round(got / total * 100) }) : I18N.t("options.downloadingMB", { mb: fmtMB(got) });
   });
 }
 
@@ -417,17 +435,17 @@ async function renderOffline() {
     const st = await localStatus(v);
     const row = el("div", "offrow");
     const status = el("div", "offstatus" + (st ? " ok" : ""),
-      st ? `Offline ✓ · ≈ ${fmtMB(st.bytes)} · ${st.verses.toLocaleString("pt-BR")} versículos${st.from === "importada" ? " · importada" : ""}`
-         : v.bundled ? "Incluída na extensão ✓ · funciona sem internet"
-         : (v.json ? "Não baixada" : "Não baixada (só por importação de arquivo)"));
+      st ? I18N.t("options.offHave", { mb: fmtMB(st.bytes), verses: st.verses.toLocaleString(I18N.locale), imp: st.from === "importada" ? I18N.t("options.offImported") : "" })
+         : v.bundled ? I18N.t("options.offBundled")
+         : (v.json ? I18N.t("options.offNone") : I18N.t("options.offNoneImport")));
     const btns = el("div", "offbtns");
     const run = fn => async () => {
       try { await fn(); } catch (e) { status.textContent = e.message || String(e); status.className = "offstatus err"; return; }
       renderOffline();
     };
-    if (v.json && !st) btns.append(btn("Baixar", run(() => downloadWithProgress(v, status))));
+    if (v.json && !st) btns.append(btn(I18N.t("options.download"), run(() => downloadWithProgress(v, status))));
     if (st || v.bundled) {
-      btns.append(btn("Exportar", run(async () => {
+      btns.append(btn(I18N.t("options.export"), run(async () => {
         const blob = new Blob([JSON.stringify(await buildPackage(v))], { type: "application/json" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
@@ -436,11 +454,11 @@ async function renderOffline() {
         setTimeout(() => URL.revokeObjectURL(a.href), 5000);
       })));
     }
-    if (!v.bundled) btns.append(btn("Importar…", () => { importTarget = v; $("fileIn").value = ""; $("fileIn").click(); }));
-    if (st) btns.append(btn("Remover", run(async () => {
-      if (confirm(`Remover o texto offline de ${v.short}? Você poderá baixá-lo de novo depois.`)) await removeLocal(packOf(v));
+    if (!v.bundled) btns.append(btn(I18N.t("options.import"), () => { importTarget = v; $("fileIn").value = ""; $("fileIn").click(); }));
+    if (st) btns.append(btn(I18N.t("options.remove"), run(async () => {
+      if (confirm(I18N.t("options.confirmRemove", { short: v.short }))) await removeLocal(packOf(v));
     })));
-    row.append(el("div", "offname", v.label + (v.third ? " · texto de terceiros" : "")), status, btns);
+    row.append(el("div", "offname", v.label + (v.third ? I18N.t("options.thirdSuffix") : "")), status, btns);
     box.append(row);
   }
 }
@@ -448,14 +466,14 @@ function btn(label, fn) { const b = el("button", "", label); b.onclick = fn; ret
 
 async function initOffline() {
   $("offlineOnly").checked = !!(await chrome.storage.local.get("offlineOnly")).offlineOnly;
-  $("offlineOnly").onchange = e => { chrome.storage.local.set({ offlineOnly: e.target.checked }); setStatus(e.target.checked ? "Somente textos baixados ✓" : "Internet liberada para leitura ✓"); };
+  $("offlineOnly").onchange = e => { chrome.storage.local.set({ offlineOnly: e.target.checked }); setStatus(e.target.checked ? I18N.t("options.offOnlyOn") : I18N.t("options.offOnlyOff")); };
   $("dlAll").onclick = async () => {
     for (const v of VERSIONS.filter(x => x.json && !x.bundled)) {
       if (await localStatus(v)) continue;
-      setOffMsg(`Baixando ${v.short}…`);
-      try { await downloadPack(v); } catch (e) { setOffMsg(`${v.short}: ${e.message}`, true); await renderOffline(); return; }
+      setOffMsg(I18N.t("options.downloadingShort", { short: v.short }));
+      try { await downloadPack(v); } catch (e) { setOffMsg(I18N.t("options.shortError", { short: v.short, msg: e.message }), true); await renderOffline(); return; }
     }
-    setOffMsg("Todas as versões disponíveis estão baixadas ✓");
+    setOffMsg(I18N.t("options.allDownloaded"));
     renderOffline();
   };
   $("importNew").onclick = () => { importTarget = null; $("fileIn").value = ""; $("fileIn").click(); };
@@ -465,8 +483,8 @@ async function initOffline() {
     try {
       const { ver, meta } = await importPackageText(await f.text(), importTarget);
       fillVersionSelect();
-      setOffMsg(`Importado: ${ver.label} (${meta.verses.toLocaleString("pt-BR")} versículos) ✓`);
-    } catch (err) { setOffMsg("Não foi possível importar: " + (err.message || err), true); }
+      setOffMsg(I18N.t("options.imported", { label: ver.label, verses: meta.verses.toLocaleString(I18N.locale) }));
+    } catch (err) { setOffMsg(I18N.t("options.errImport", { msg: err.message || err }), true); }
     importTarget = null;
     renderOffline();
   };
@@ -475,9 +493,12 @@ async function initOffline() {
 
 // ---------- geral ----------
 async function initGeneral() {
+  I18N.languages().forEach(l => $("glang").add(new Option(I18N.t("lang.name." + l), l)));
+  $("glang").value = I18N.lang;
+  $("glang").onchange = async e => { await I18N.set(e.target.value); location.reload(); };
   VERSIONS.forEach(v => $("gversion").add(new Option(v.label, v.id)));
   $("gversion").value = (await loadVersion()).id;
-  $("gversion").onchange = e => { saveVersion(e.target.value); setStatus("Versão salva ✓"); };
+  $("gversion").onchange = e => { saveVersion(e.target.value); setStatus(I18N.t("options.versionSaved")); };
 
   $("sync").checked = await syncEnabled();
   $("sync").onchange = async e => {
@@ -486,7 +507,7 @@ async function initGeneral() {
       if (want) {
         let keepRemote = false;
         if (await hasRemotePlan()) {
-          if (!confirm("Já existe um plano sincronizado na sua conta do Chrome. Usá-lo neste computador? (O plano local será substituído.)")) throw new Error("Sincronização não ativada.");
+          if (!confirm(I18N.t("options.confirmUseRemote"))) throw new Error(I18N.t("options.syncNotEnabled"));
           keepRemote = true;
         }
         await enableSync(keepRemote);
@@ -496,7 +517,7 @@ async function initGeneral() {
       saved = await loadPlan();
       draft = makeDraft(saved);
       renderAll();
-      setStatus(want ? "Sincronização ligada ✓" : "Sincronização desligada");
+      setStatus(want ? I18N.t("options.syncOn") : I18N.t("options.syncOff"));
     } catch (err) {
       e.target.checked = !want;
       setStatus(err.message || String(err), true);
@@ -504,17 +525,24 @@ async function initGeneral() {
   };
 
   $("clearSelah").onclick = async () => {
-    if (!confirm("Apagar todas as pausas (Selá) marcadas?")) return;
-    await Selah.clearAll(); setStatus("Pausas apagadas ✓");
+    if (!confirm(I18N.t("options.confirmClearSelah"))) return;
+    await Selah.clearAll(); setStatus(I18N.t("options.selahCleared"));
   };
   $("resetAll").onclick = async () => {
-    if (!confirm("Zerar o progresso de todas as trilhas?")) return;
+    if (!confirm(I18N.t("options.confirmResetAll"))) return;
     [draft.main, ...draft.secTracks].forEach(t => { t.pos = 0; t.cycles = 0; t.history = []; t.todayDone = 0; });
     await save();
   };
 }
 
+function applyI18n() {
+  I18N.apply();
+  document.querySelectorAll("[data-orich]").forEach(e => orich(e, I18N.t(e.dataset.orich)));
+}
+
 async function init() {
+  await I18N.ready;
+  applyI18n();
   await loadCustomVersions();
   saved = await loadPlan();
   draft = makeDraft(saved);
@@ -529,6 +557,6 @@ async function init() {
   const flush = () => { if (saveTimer) save({ auto: true }); };
   window.addEventListener("pagehide", flush);
   document.addEventListener("visibilitychange", () => { if (document.hidden) flush(); });
-  $("ver").textContent = "Extensão v" + chrome.runtime.getManifest().version;
+  $("ver").textContent = I18N.t("options.extVersion", { v: chrome.runtime.getManifest().version });
 }
 init();

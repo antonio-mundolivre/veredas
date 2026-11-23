@@ -11,7 +11,7 @@ const Selah = (() => {
   function mark(off) {
     const m = document.createElement("span");
     m.className = "selah"; m.dataset.off = off; m.lang = "he"; m.dir = "rtl";
-    m.setAttribute("role", "button"); m.setAttribute("aria-label", "Pausa para meditação (Selá). Toque para tirar.");
+    m.setAttribute("role", "button"); m.setAttribute("aria-label", I18N.t("selah.aria"));
     m.textContent = MARK;
     return m;
   }

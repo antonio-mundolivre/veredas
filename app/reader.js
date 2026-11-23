@@ -77,12 +77,12 @@ function decorate(sec) {
   setCredit();
 }
 
-function setCredit() { const c = $("#credit"); if (c) c.textContent = version.credit || (version.third ? "Texto de terceiros baixado pelo usuário." : ""); }
+function setCredit() { const c = $("#credit"); if (c) c.textContent = version.credit || (version.third ? I18N.t("reader.credit.third") : ""); }
 
 async function loadSection(sec) {
   sec.src = "";
   decorate(sec);
-  { const p = document.createElement("p"); p.className = "status"; p.textContent = "Carregando…"; sec.body.replaceChildren(p); }
+  { const p = document.createElement("p"); p.className = "status"; p.textContent = I18N.t("reader.loading"); sec.body.replaceChildren(p); }
   try {
     const { verses, source } = await fetchVerses(CHAPTERS[sec.i], version);
     await Selah.ready;
@@ -98,6 +98,7 @@ function renderVerses(sec, verses) {
   const wrap = document.createElement("div");
   wrap.className = "verses";
   for (const v of verses) {
+    if (!v.text) continue;   // versículo omitido nesta edição (ex.: Lc 17:36 na WEB)
     if (v.heading) {
       const h = document.createElement("h2");
       h.textContent = v.heading;
@@ -120,18 +121,18 @@ function renderError(sec, e) {
   const msg = document.createElement("div");
   msg.textContent = e.message || String(e);
   const retry = document.createElement("button");
-  retry.textContent = "Tentar de novo";
+  retry.textContent = I18N.t("reader.retry");
   retry.style.marginTop = "8px";
   retry.onclick = () => loadSection(sec);
   box.append(msg, retry);
   if (e.debug) {
     const d = document.createElement("details");
     const s = document.createElement("summary");
-    s.textContent = "Detalhes técnicos";
+    s.textContent = I18N.t("reader.techDetails");
     const pre = document.createElement("pre");
     pre.textContent = e.debug;
     const copy = document.createElement("button");
-    copy.textContent = "Copiar diagnóstico";
+    copy.textContent = I18N.t("reader.copyDiag");
     copy.onclick = () => navigator.clipboard.writeText((e.message || "") + "\n\n" + e.debug);
     d.append(s, pre, copy);
     box.append(d);
@@ -147,8 +148,8 @@ async function onMark(sec) {
     const t = r.track;
     const chs = trackChapters(t);
     sec.note.textContent = !t.loop && t.pos >= chs.length
-      ? "Trilha concluída 🎉"
-      : `Próximo: ${label(CHAPTERS[chs[t.pos]])}`;
+      ? I18N.t("reader.finished")
+      : I18N.t("reader.nextLabel", { ref: label(CHAPTERS[chs[t.pos]]) });
   }
   await refreshButtons();
 }
@@ -161,16 +162,16 @@ async function refreshButtons() {
     const b = sec.markBtn;
     b.hidden = false;
     if (sec.done) {
-      b.textContent = "Lido ✓";
+      b.textContent = I18N.t("reader.read");
       b.disabled = true;
       b.classList.add("done");
       continue;
     }
     const chs = trackChapters(t);
     const isCurrent = t.pos < chs.length && chs[t.pos] === sec.i;
-    b.textContent = "✓ Marcar como lido";
+    b.textContent = I18N.t("reader.markRead");
     b.disabled = !isCurrent;
-    b.title = isCurrent ? "" : "Este não é o próximo da sua sequência de leitura";
+    b.title = isCurrent ? "" : I18N.t("reader.notNext");
     decorate(sec);
   }
 }
@@ -205,6 +206,8 @@ function openItems(items) {
 }
 
 (async function init() {
+  await I18N.ready;
+  I18N.apply();
   await loadCustomVersions();
   await loadPrefs();
   Pager.init();

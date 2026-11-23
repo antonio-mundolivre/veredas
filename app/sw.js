@@ -1,6 +1,6 @@
 /* Veredas: guarda o app no aparelho para abrir sem internet. */
-const CACHE = "veredas-2.6-b96e1426";
-const FILES = ["./", "bible-data.js", "bibles/blivre.json", "culto.css", "culto.html", "culto.js", "icons/app-180.png", "icons/app-192.png", "icons/app-512.png", "icons/icon128.png", "icons/icon16.png", "icons/icon32.png", "icons/icon48.png", "icons/maskable-512.png", "index.html", "manifest.webmanifest", "options.css", "options.html", "options.js", "pager.js", "popup.css", "popup.js", "reader.css", "reader.html", "reader.js", "selah.js", "source.js", "state.js", "web-shim.js", "web.css"];
+const CACHE = "veredas-2.6-ead2d392";
+const FILES = ["./", "bible-data.js", "bibles/blivre.json", "culto.css", "culto.html", "culto.js", "i18n.js", "icons/app-180.png", "icons/app-192.png", "icons/app-512.png", "icons/icon128.png", "icons/icon16.png", "icons/icon32.png", "icons/icon48.png", "icons/maskable-512.png", "index.html", "lang/books.js", "lang/en.js", "lang/es.js", "lang/pt.js", "manifest.webmanifest", "options.css", "options.html", "options.js", "pager.js", "popup.css", "popup.js", "reader.css", "reader.html", "reader.js", "selah.js", "source.js", "state.js", "web-shim.js", "web.css"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k.startsWith("veredas-")).map(k => caches.delete(k)))).then(() => self.clients.claim()));
