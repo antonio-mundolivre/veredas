@@ -31,6 +31,9 @@ const I18N = (() => {
     if (document.documentElement) document.documentElement.lang = LOCALES[lang] || lang;
   }
   async function init() {
+    // espera todos os <script> rodarem (inclusive lang/xx.js, que vêm depois deste arquivo); sem isso, se o
+    // armazenamento respondesse antes de lang/en.js carregar, o idioma salvo era descartado e voltava ao português
+    if (document.readyState === "loading") await new Promise(r => document.addEventListener("DOMContentLoaded", r, { once: true }));
     try {
       let saved = null;
       try { saved = localStorage.getItem("veredas.lang"); } catch (e) { /* sem localStorage */ }   // cópia síncrona: vale mesmo se o armazenamento falhar
