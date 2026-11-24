@@ -465,6 +465,8 @@ async function renderOffline() {
 function btn(label, fn) { const b = el("button", "", label); b.onclick = fn; return b; }
 
 async function initOffline() {
+  $("keepAwake").checked = (await chrome.storage.local.get("keepAwake")).keepAwake !== false;
+  $("keepAwake").onchange = e => { chrome.storage.local.set({ keepAwake: e.target.checked }); setStatus(I18N.t(e.target.checked ? "options.keepAwakeOn" : "options.keepAwakeOff")); };
   $("offlineOnly").checked = !!(await chrome.storage.local.get("offlineOnly")).offlineOnly;
   $("offlineOnly").onchange = e => { chrome.storage.local.set({ offlineOnly: e.target.checked }); setStatus(e.target.checked ? I18N.t("options.offOnlyOn") : I18N.t("options.offOnlyOff")); };
   $("dlAll").onclick = async () => {
@@ -561,6 +563,34 @@ function applyI18n() {
   document.querySelectorAll("[data-orich]").forEach(e => orich(e, I18N.t(e.dataset.orich)));
 }
 
+async function initNarr() {
+  await Narrator.ready;
+  if (!Narrator.supported) { $("narrBox").textContent = I18N.t("options.narrNone"); return; }
+  const c = Narrator.settings(), out = $("narrRateOut");
+  const fmt = v => (+v).toFixed(2).replace(/0$/, "").replace(/\.$/, "").replace(".", I18N.lang === "en" ? "." : ",") + "×";
+  $("narrRate").value = c.rate; out.textContent = fmt(c.rate);
+  $("narrRate").oninput = e => { out.textContent = fmt(e.target.value); };
+  $("narrRate").onchange = e => Narrator.save({ rate: +e.target.value });
+  [["narrAuto", "auto"], ["narrSelah", "selah"], ["narrNums", "nums"]].forEach(([id, k]) => { $(id).checked = !!c[k]; $(id).onchange = e => Narrator.save({ [k]: e.target.checked }); });
+  const list = await Narrator.voices(), box = $("narrVoices");
+  I18N.languages().forEach(l => {
+    const mine = list.filter(v => v.lang.replace("_", "-").slice(0, 2).toLowerCase() === l);
+    const lab = document.createElement("label"); lab.className = "field";
+    const sp = document.createElement("span"); sp.textContent = I18N.t("options.narrVoiceFor", { lang: I18N.t("lang.name." + l) });
+    const sel = document.createElement("select");
+    if (!mine.length) { sel.add(new Option(I18N.t("options.narrNoVoices"), "")); sel.disabled = true; }
+    else {
+      sel.add(new Option(I18N.t("options.narrVoiceAuto"), ""));
+      mine.sort((a, b) => (b.localService - a.localService) || a.name.localeCompare(b.name))
+          .forEach(v => sel.add(new Option(v.name + " (" + v.lang + ")" + (v.localService ? "" : I18N.t("options.narrOnline")), v.voiceURI)));
+      sel.value = (Narrator.settings().voices || {})[l] || "";
+      sel.onchange = () => Narrator.save({ voices: { ...(Narrator.settings().voices || {}), [l]: sel.value } });
+    }
+    lab.append(sp, sel); box.append(lab);
+  });
+  $("narrTest").onclick = () => Narrator.sample(I18N.lang, I18N.t("options.narrSample"));
+}
+
 const TABS = ["plano", "biblias", "geral", "sobre"];
 function showTab(name, opts) {
   if (!TABS.includes(name)) name = "plano";
@@ -606,6 +636,7 @@ async function init() {
   await initGeneral();
   await initOffline();
   initTabs();
+  initNarr();
   $("save").onclick = save;
   chrome.storage.onChanged.addListener(changes => {
     if (changes.version) $("gversion").value = changes.version.newValue;

@@ -35,6 +35,7 @@ function bindToolbar() {
   document.querySelectorAll("[data-theme-btn]").forEach(b => b.onclick = () => { prefs.theme = b.dataset.themeBtn; applyPrefs(); savePrefs(); });
   VERSIONS.forEach(v => $("#version").add(new Option(v.label, v.id)));
   $("#version").onchange = async e => {
+    Narrator.stop();
     version = VERSIONS.find(v => v.id === e.target.value) || VERSIONS[0];
     await saveVersion(version.id);
     await Promise.all(sections.map(loadSection));
@@ -211,6 +212,7 @@ function openItems(items) {
   await loadCustomVersions();
   await loadPrefs();
   Pager.init();
+  Narrator.attach({ root: () => $("#content"), viewport: () => $("#pager"), lang: () => version.lang || "pt", notify: m => { const e = $("#pageinfo"); if (e) e.textContent = m; } });
   applyPrefs();
   bindToolbar();
   $("#goCulto").onclick = () => { location.href = chrome.runtime.getURL("culto.html"); };

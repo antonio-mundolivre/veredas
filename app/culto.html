@@ -56,10 +56,13 @@
       <button id="booksBtn" class="ib" aria-label="Nova passagem: escolher o livro" title="Nova passagem (escolher livro e capítulo)" data-i18n-aria-label="culto.booksBtn.aria" data-i18n-title="culto.booksBtn.tip"></button>
       <button id="newBtn" class="ib" aria-label="Novo" title="Novo: começar uma lista vazia (dá para desfazer)" data-i18n-aria-label="culto.newBtn.aria" data-i18n-title="culto.newBtn.tip"></button>
       <button id="saveBtn" class="ib" aria-label="Guardar" title="Guardar estas passagens" data-i18n-aria-label="culto.saveBtn.aria" data-i18n-title="culto.saveBtn.tip"></button>
+      <button id="mailBtn" class="ib" aria-label="Enviar por e-mail" title="Enviar estas passagens por e-mail" data-i18n-aria-label="culto.shareMail.aria" data-i18n-title="culto.shareMail.tip"></button>
+      <button id="waBtn" class="ib" aria-label="Enviar por WhatsApp" title="Enviar estas passagens por WhatsApp" data-i18n-aria-label="culto.shareWa.aria" data-i18n-title="culto.shareWa.tip"></button>
       <button id="readBtn" class="ib" aria-label="Abrir" title="Abrir passagens guardadas" data-i18n-aria-label="culto.readBtn.aria" data-i18n-title="culto.readBtn.tip"></button>
     </div>
     <div id="qmsg" class="qmsg"></div>
     <div id="tabs" class="tabs"></div>
+    <div id="cardbar" class="cardbar" hidden></div>
     <div id="panel" class="panel" hidden></div>
   </div>
 
@@ -67,8 +70,15 @@
 
   <div id="pager"><main id="content"></main></div>
 
+  <div class="narrbar" id="narrbar" hidden>
+    <button id="narrPrev" type="button"></button><button id="narrStop" type="button"></button><button id="narrNext" type="button"></button>
+    <span id="narrInfo" class="narrinfo"></span>
+    <select id="narrRate"><option value="0.7">0,7×</option><option value="0.85">0,85×</option><option value="1">1×</option><option value="1.15">1,15×</option><option value="1.3">1,3×</option><option value="1.5">1,5×</option></select>
+  </div>
+
   <div class="pagebar">
     <button id="prev" data-i18n="common.prev">‹ Anterior</button>
+    <button id="narrBtn" class="narrbtn" type="button" hidden></button>
     <div class="mid"><div id="pageinfo"></div><div id="credit" class="credit"></div></div>
     <button id="next" data-i18n="common.next">Próxima ›</button>
   </div>
@@ -84,8 +94,11 @@
   <script src="lang/de.js"></script>
   <script src="state.js"></script>
   <script src="source.js"></script>
+  <script src="share.js"></script>
   <script src="pager.js"></script>
   <script src="selah.js"></script>
+  <script src="wake.js"></script>
+  <script src="narrator.js"></script>
   <script src="culto.js"></script>
 </body>
 </html>

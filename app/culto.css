@@ -115,3 +115,8 @@ body.tall .finder { max-height: 74vh; }
 
 /* uma passagem por vez: o cartão escondido não pode forçar quebra de coluna (deixava a página em branco no Safari) */
 body[data-view="single"] .chapter + .chapter { break-before: auto; }
+
+/* barra de botões da passagem ativa: sempre visível, em qualquer página do texto */
+.cardbar { margin: 0 0 8px; }
+.cardbar[hidden] { display: none; }
+.cardbar .cardtop { padding: 6px 8px; border: 1px solid var(--rule); border-radius: 10px; background: var(--bar); }

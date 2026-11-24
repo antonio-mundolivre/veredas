@@ -78,3 +78,9 @@ section[data-tab] > h2:first-child { margin-top: 18px; }
 .langbtn .flag { width: 24px; height: 16px; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.25); flex: none; }
 .langbtn.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; font-weight: 600; background: #efe9d8; }
 .langs { margin: 4px 0 14px; }
+
+.rateline { display: flex; align-items: center; gap: 12px; max-width: 360px; }
+.rateline input { flex: 1; }
+.rateline output { min-width: 3.4em; text-align: right; font-variant-numeric: tabular-nums; }
+#narrBox { display: grid; gap: 10px; }
+#narrVoices { display: grid; gap: 8px; }

@@ -72,10 +72,24 @@
     </div>
     <label class="inl"><input type="checkbox" id="sync"> <span data-i18n="options.syncLabel">Sincronizar o plano entre computadores (usa a conta do navegador)</span></label>
     <p class="hint" data-i18n="options.syncHint">Com a sincronização ligada, o plano e o progresso acompanham a conta do seu navegador (Chrome ou Firefox) em qualquer computador onde a extensão estiver instalada.</p>
+    <label class="inl"><input type="checkbox" id="keepAwake"> <span data-i18n="options.keepAwakeLabel">Manter a tela acesa durante a leitura</span></label>
+    <p class="hint" data-i18n="options.keepAwakeHint">Evita que a tela apague enquanto você lê. Desligue para economizar bateria.</p>
     <button id="resetAll" class="danger" data-i18n="options.resetAll">Zerar o progresso de todas as trilhas</button>
     <h3 data-i18n="options.selahTitle">Pausas para meditação (Selá)</h3>
     <p class="hint" data-orich="options.selahHint">Durante a leitura, <b>toque ou clique numa palavra</b> para marcar uma pausa: aparece <span lang="he" dir="rtl">סֶלָה</span> logo depois dela. Toque na marca para tirá-la. As pausas ficam guardadas neste aparelho.</p>
     <button id="clearSelah" class="danger" data-i18n="options.selahClear">Apagar todas as pausas</button>
+    <h3 data-i18n="options.narrTitle">Narração</h3>
+    <p class="hint" data-i18n="options.narrHint">O narrador lê o texto em voz alta com as vozes do aparelho.</p>
+    <div id="narrBox">
+      <div class="field"><span data-i18n="options.narrRate">Velocidade</span>
+        <div class="rateline"><input id="narrRate" type="range" min="0.6" max="1.5" step="0.05" value="1"><output id="narrRateOut">1×</output></div>
+      </div>
+      <div id="narrVoices"></div>
+      <label class="inl"><input type="checkbox" id="narrAuto"> <span data-i18n="options.narrAuto">Seguir para o próximo capítulo ao terminar</span></label>
+      <label class="inl"><input type="checkbox" id="narrSelah"> <span data-i18n="options.narrSelah">Pausar nas marcas do Selá</span></label>
+      <label class="inl"><input type="checkbox" id="narrNums"> <span data-i18n="options.narrNums">Falar o número de cada versículo</span></label>
+      <button id="narrTest" type="button" data-i18n="options.narrTest">Ouvir amostra</button>
+    </div>
   </section>
 
   <section id="about" data-tab="sobre">
@@ -103,6 +117,7 @@
 <script src="state.js"></script>
 <script src="source.js"></script>
 <script src="selah.js"></script>
+<script src="narrator.js"></script>
 <script src="options.js"></script>
 </body>
 </html>

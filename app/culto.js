@@ -29,6 +29,8 @@ const ICONS = {
   plus:   ["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z", "M14 2v6h6", "M12 18v-6", "M9 15h6"],
   save:   ["M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z", "M17 21v-8H7v8", "M7 3v5h8"],
   folder: ["M3 19V6a1 1 0 0 1 1-1h5l2 2h7a1 1 0 0 1 1 1v2", "M3 19l2.5-8.5a1 1 0 0 1 1-.7H21l-2.6 8.5a1 1 0 0 1-1 .7H3z"],
+  mail:   ["M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z", "M22 6l-10 7L2 6"],
+  wa:     ["M3 21l1.7-5A9 9 0 1 1 8 19.3z", "M9 9.2c0 3 2.8 5.8 5.8 5.8l1.2-1.3-2.100-1.100-.9.900c-1-.4-1.900-1.300-2.300-2.300l.9-.9-1.100-2.100z"],
   grid:   ["M3 3h7v7H3z", "M14 3h7v7h-7z", "M3 14h7v7H3z", "M14 14h7v7h-7z"]
 };
 function icon(name, size = 20) {
@@ -241,7 +243,9 @@ function renderCard(it) {
 
   const h1 = document.createElement("h1");
   h1.textContent = itemRef(it);
-  sec.append(top, h1);
+  // uma passagem por vez: os botões do cartão ficam numa barra fixa (#cardbar), fora da página paginada,
+  // senão só apareciam na 1ª página e sumiam ao virar. Em "ver todos juntos" continuam dentro de cada cartão.
+  if (prefs.view === "all") sec.append(top, h1); else { sec._top = top; sec.append(h1); }
 
   if (err) {
     const box = document.createElement("div");
@@ -304,6 +308,7 @@ function updateEmpty() {
 function setActive(id) {
   const it = items.find(i => i.id === id);
   if (!it) return;
+  if (!narrBusy && Narrator.isActive()) Narrator.stop();
   if (pickMode === "new") closePicker();
   activeId = id;
   awaitingEnd = false;
@@ -459,6 +464,11 @@ async function openReadPanel() {
 }
 async function drawReadPanel() {
   const p = $("#panel"); p.replaceChildren();
+  const paste = document.createElement("div"); paste.className = "prow"; paste.style.marginBottom = "8px";
+  const pin = document.createElement("input"); pin.type = "text"; pin.placeholder = t("culto.paste.label"); pin.setAttribute("aria-label", t("culto.paste.label"));
+  const load = () => { const d = Share.decode(pin.value); if (!d) { msg(t("culto.paste.bad"), true); return; } msg(""); showIncoming(d); };
+  pin.onkeydown = e => { if (e.key === "Enter") load(); };
+  paste.append(pin, btn(t("culto.paste.go"), "", load)); p.append(paste);
   const list = await getSaved();
   if (!list.length) { p.append(el_("div", t("culto.read.none"))); p.lastChild.className = "none"; Pager.layout(); return; }
   FOLDERS.forEach(folder => {
@@ -486,7 +496,32 @@ async function drawReadPanel() {
 }
 
 // no fim da leitura de um capítulo inteiro, o botão "Próxima" vira "Próximo capítulo ›" e a passagem passa a ser o capítulo seguinte
+// narração: ao acabar o cartão, segue para o capítulo seguinte (cartão de capítulo inteiro) ou para a próxima passagem da lista
+let narrBusy = false;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function narrAdvance() {
+  if (!Narrator.settings().auto || prefs.view === "all") return false;
+  const it = activeItem();
+  if (!it) return false;
+  narrBusy = true;
+  try {
+    const whole = !it.s || it.showAll;
+    if (whole && CHAPTERS[gIndex(it.book, it.chapter) + 1]) moveChapter(it, 1, true);
+    else {
+      const k = items.findIndex(x => x.id === it.id), nx = items[k + 1];
+      if (!nx) return false;
+      setActive(nx.id); Pager.reset();
+    }
+    for (let n = 0; n < 80; n++) { await sleep(100); const el = els.get(activeId); if (el && el.querySelector(".verses .v")) return true; }
+    return false;
+  } finally { narrBusy = false; }
+}
+function syncBar() {
+  const bar = $("#cardbar"), el = prefs.view === "all" ? null : els.get(activeId);
+  if (el && el._top) { bar.replaceChildren(el._top); bar.hidden = false; } else { bar.replaceChildren(); bar.hidden = true; }
+}
 function syncNext() {
+  syncBar();
   const it = activeItem();
   const whole = it && (!it.s || it.showAll);
   const can = !!whole && prefs.view !== "all" && !!CHAPTERS[gIndex(it.book, it.chapter) + 1];
@@ -626,6 +661,63 @@ function pickVerse(n) {
   renderTabs();
 }
 
+// ---------- compartilhar e receber ----------
+// versículos de um cartão para a mensagem: só o trecho escolhido (ou o capítulo inteiro, se for o caso)
+function blockFor(it, d) {
+  const range = it.s != null && !it.showAll;
+  const verses = d.verses.filter(v => v.text && (!range || (v.n >= it.s && v.n <= it.e))).map(v => ({ n: v.n, text: v.text }));
+  return { ref: itemRef(it), ver: version.short, verses };
+}
+function openExternal(href) {
+  const w = window.open(href, "_blank", "noopener");
+  if (!w) { location.href = href; }   // pop-up bloqueado (iPhone): abre na própria página
+}
+async function shareItems(kind) {
+  if (pickMode) closePicker();
+  if (!items.length) { msg(t("culto.save.needOne")); return; }
+  // dados já carregados nos cartões: monta na hora, para o toque ainda valer como gesto do usuário (iPhone)
+  let datas = items.map(it => mem.get(keyFor(it)));
+  if (datas.some(x => !x)) {
+    msg(t("share.preparing"));
+    try { datas = await Promise.all(items.map(it => ensureData(it, version))); } catch (e) { msg(String(e.message || e), true); return; }
+  }
+  const blocks = items.map((it, k) => blockFor(it, datas[k]));
+  const link = Share.url(Share.encode(snapshot(), version.id));
+  const r = Share.render(kind, blocks, link, kind === "wa" ? 5500 : 3500);
+  if (r.truncated) msg(t("share.tooLong")); else msg("");
+  if (kind === "wa") openExternal(Share.waLink(r.text));
+  else openExternal(Share.mailLink(Share.subject(blocks), r.text));
+}
+
+// passagens recebidas (link com #p=… ou código colado): oferece abrir, juntar às atuais ou ignorar
+function showIncoming(data) {
+  if (pickMode) closePicker();
+  panelMode = "incoming";
+  const p = $("#panel"); p.hidden = false; p.replaceChildren();
+  p.append(el_("h5", t("culto.incoming.title", { n: data.items.length })));
+  p.append(el_("div", data.items.map(itemRef).join(" · ")));
+  const other = data.ver && data.ver !== version.id ? VERSIONS.find(v => v.id === data.ver) : null;
+  if (other) p.append(el_("div", t("culto.incoming.from", { v: other.short })));
+  const row = document.createElement("div"); row.className = "prow"; row.style.marginTop = "8px";
+  const go = async add => {
+    if (other && go.useOther) { version = other; $("#version").value = other.id; await saveVersion(other.id); mem.clear(); updateBadge(); }
+    const before = snapshot();
+    setList(add ? snapshot().concat(data.items) : data.items);
+    closePanel();
+    msg(t("culto.incoming.opened"), false, before.length ? [{ label: t("culto.msg.undo"), fn: () => { setList(before); msg(""); } }] : []);
+  };
+  row.append(btn(t("culto.incoming.open"), "primary", () => go(false)));
+  if (items.length) row.append(btn(t("culto.incoming.add"), "", () => go(true)));
+  if (other) {
+    const lab = document.createElement("label"); lab.className = "inl";
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.onchange = () => { go.useOther = cb.checked; };
+    lab.append(cb, " ", t("culto.incoming.useVer", { v: other.short })); row.append(lab);
+  }
+  row.append(btn(t("culto.incoming.ignore"), "", closePanel));
+  p.append(row);
+  Pager.layout();
+}
+
 // ---------- busca digitada ----------
 function msg(text, err, chips) {
   const m = $("#qmsg");
@@ -671,9 +763,17 @@ function reloadAll() {
   VERSIONS.forEach(v => $("#version").add(new Option(v.label, v.id)));
   $("#version").value = version.id;
   Pager.init();
+  Narrator.attach({
+    root: () => (prefs.view === "all" ? $("#content") : els.get(activeId)),
+    viewport: () => $("#pager"),
+    lang: () => version.lang || "pt",
+    advance: narrAdvance,
+    notify: m => msg(m, true)
+  });
   applyPrefs();
 
   $("#version").onchange = async e => {
+    Narrator.stop();
     version = VERSIONS.find(v => v.id === e.target.value) || VERSIONS[0];
     await saveVersion(version.id);
     reloadAll();
@@ -687,12 +787,13 @@ function reloadAll() {
   $("#allView").onchange = e => {
     prefs.view = e.target.checked ? "all" : "single";
     applyPrefs(); savePrefs();
+    items.forEach(i => redrawCard(i.id));   // os botões do cartão mudam de lugar conforme o modo
     Pager.reveal(els.get(activeId));
     syncNext();
   };
   alignRefresh = Pager.buildAlign($("#alignGroup"), () => prefs.align, v => { prefs.align = v; applyPrefs(); savePrefs(); });
   alignRefresh();
-  [["booksBtn", "book"], ["newBtn", "plus"], ["saveBtn", "save"], ["readBtn", "folder"]].forEach(([id, ic]) => { $("#" + id).replaceChildren(icon(ic)); });
+  [["booksBtn", "book"], ["newBtn", "plus"], ["saveBtn", "save"], ["mailBtn", "mail"], ["waBtn", "wa"], ["readBtn", "folder"]].forEach(([id, ic]) => { $("#" + id).replaceChildren(icon(ic)); });
   $("#booksBtn").onclick = () => (pickMode === "new" ? closePicker() : openPicker("new", "book"));
   document.addEventListener("keydown", e => { if (e.key === "Escape" && pickMode) closePicker(); });
   new ResizeObserver(() => { if (pickMode) placePicker(); }).observe($(".finder"));
@@ -700,6 +801,8 @@ function reloadAll() {
   $("#newBtn").onclick = newList;
   $("#saveBtn").onclick = openSavePanel;
   $("#readBtn").onclick = openReadPanel;
+  $("#mailBtn").onclick = () => shareItems("mail");
+  $("#waBtn").onclick = () => shareItems("wa");
   $("#q").addEventListener("keydown", e => {
     if (e.key === "Enter") submitQuery();
     if (e.key === "Escape") { $("#q").value = ""; msg(""); }
@@ -736,5 +839,7 @@ function reloadAll() {
   const saved = await chrome.storage.local.get(["cultoList", "cultoActive"]);
   setList(Array.isArray(saved.cultoList) ? saved.cultoList : [], saved.cultoActive);
   updateBadge();
+  const incoming = Share.fromLocation();   // abriu por um link recebido (…/culto.html#p=código)
+  if (incoming) { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} showIncoming(incoming); }
   $("#q").focus();
 })();
