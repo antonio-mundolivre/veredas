@@ -80,22 +80,22 @@ const Share = (() => {
   }
   // e-mail formatado (HTML com estilos na própria tag, o que os programas de e-mail aceitam): copiado para a área de transferência
   const esc = x => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  // Sem tabelas: o Gmail do iPhone e outros aplicativos simplificam o que se cola; assim o texto fica em títulos e parágrafos legíveis
+  // mesmo que percam as cores (e o Gmail/Outlook do computador mantêm o visual completo).
   function html(blocks, link) {
-    const ACC = "#7a5c30", INK = "#27231c", MUTE = "#8a8272", PAPER = "#fbf9f4", BAND = "#f1ece0";
+    const ACC = "#7a5c30", INK = "#27231c", MUTE = "#8a8272";
     const serif = "Georgia,'Times New Roman',serif", sans = "-apple-system,'Segoe UI',Helvetica,Arial,sans-serif";
     const cards = blocks.map(b => {
-      const vs = b.verses.map(v => `<span style="font-family:${sans};font-size:11px;font-weight:bold;color:${ACC};vertical-align:super;padding-right:3px">${v.n}</span>${esc(v.text)}`).join(" ");
-      return `<tr><td style="padding:0 24px 16px 24px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PAPER};border:1px solid #e5dfd0;border-left:5px solid ${ACC};border-radius:8px"><tr><td style="padding:16px 18px">`
-        + `<div style="font-family:${sans};font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:${MUTE};padding-bottom:4px">${esc(b.ver)}</div>`
-        + `<div style="font-family:${serif};font-size:22px;font-weight:bold;color:${INK};padding-bottom:10px">${esc(b.ref)}</div>`
-        + `<div style="font-family:${serif};font-size:17px;line-height:1.7;color:${INK}">${vs}</div></td></tr></table></td></tr>`;
+      const vs = b.verses.map(v => `<sup style="font-family:${sans};font-size:11px;color:${ACC}"><b>${v.n}</b></sup>&nbsp;${esc(v.text)}`).join(" ");
+      return `<div style="margin:0 0 18px 0;padding:14px 16px;background:#fbf9f4;border:1px solid #e5dfd0;border-left:5px solid ${ACC};border-radius:8px">`
+        + `<h2 style="margin:0 0 8px 0;font-family:${serif};font-size:22px;color:${INK}"><b>${esc(b.ref)}</b> <span style="font-family:${sans};font-size:12px;font-weight:normal;letter-spacing:1px;color:${MUTE}">${esc(b.ver)}</span></h2>`
+        + `<p style="margin:0;font-family:${serif};font-size:17px;line-height:1.7;color:${INK}">${vs}</p></div>`;
     }).join("");
-    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border:1px solid #e5dfd0;border-radius:10px"><tr><td style="background:${ACC};padding:18px 24px;border-radius:10px 10px 0 0">`
-      + `<div style="font-family:${sans};font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#ecdfc6">Veredas</div>`
-      + `<div style="font-family:${serif};font-size:24px;color:#ffffff;padding-top:2px">${esc(T("share.title"))}</div></td></tr>`
-      + `<tr><td style="height:18px;line-height:18px;font-size:1px">&nbsp;</td></tr>${cards}`
-      + `<tr><td style="padding:4px 24px 24px 24px;text-align:center"><a href="${esc(link)}" style="display:inline-block;background:${ACC};color:#ffffff;font-family:${sans};font-size:15px;font-weight:bold;text-decoration:none;padding:12px 26px;border-radius:8px">${esc(T("share.open"))}</a>`
-      + `<div style="font-family:${sans};font-size:12px;color:${MUTE};padding-top:10px;word-break:break-all"><a href="${esc(link)}" style="color:${MUTE}">${esc(link)}</a></div></td></tr></table>`;
+    return `<div style="max-width:620px;font-family:${sans}">`
+      + `<div style="background:${ACC};color:#ffffff;padding:16px 20px;border-radius:10px 10px 0 0"><div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#ecdfc6">Veredas</div><div style="font-family:${serif};font-size:24px;color:#ffffff"><b>${esc(T("share.title"))}</b></div></div>`
+      + `<div style="height:14px"></div>${cards}`
+      + `<p style="text-align:center;margin:6px 0 0 0"><a href="${esc(link)}" style="display:inline-block;background:${ACC};color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;padding:12px 26px;border-radius:8px">${esc(T("share.open"))}</a></p>`
+      + `<p style="text-align:center;font-size:12px;color:${MUTE};margin:8px 0 0 0;word-break:break-all"><a href="${esc(link)}" style="color:${MUTE}">${esc(link)}</a></p></div>`;
   }
   const subject = blocks => T("share.mailSubject", { refs: blocks.slice(0, 3).map(b => b.ref).join(", ") + (blocks.length > 3 ? " +" + (blocks.length - 3) : "") });
   const waLink = text => "https://wa.me/?text=" + encodeURIComponent(text);
