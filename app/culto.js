@@ -686,7 +686,37 @@ async function shareItems(kind) {
   const r = Share.render(kind, blocks, link, kind === "wa" ? 5500 : 3500);
   if (r.truncated) msg(t("share.tooLong")); else msg("");
   if (kind === "wa") openExternal(Share.waLink(r.text));
-  else openExternal(Share.mailLink(Share.subject(blocks), r.text));
+  else showMailPanel(Share.subject(blocks), r.text);
+}
+
+// e-mail: o link mailto: só funciona se o aparelho tiver um app de e-mail configurado; por isso há alternativas
+function copyText(text) {
+  const done = () => msg(t("culto.mail.copied"));
+  if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, () => legacyCopy(text, done)); } else legacyCopy(text, done);
+}
+function legacyCopy(text, done) {
+  const ta = document.createElement("textarea"); ta.value = text; ta.style.cssText = "position:fixed;left:0;top:0;opacity:0";
+  document.body.append(ta); ta.focus(); ta.select();
+  try { document.execCommand("copy"); done(); } catch (e) { msg(t("culto.mail.copyFail"), true); }
+  ta.remove();
+}
+function showMailPanel(subject, text) {
+  panelMode = "mail";
+  const p = $("#panel"); p.hidden = false; p.replaceChildren();
+  p.append(el_("h5", t("culto.mail.title")));
+  const row = document.createElement("div"); row.className = "prow";
+  const q = s => encodeURIComponent(s);
+  row.append(
+    btn(t("culto.mail.app"), "primary", () => { const a = document.createElement("a"); a.href = Share.mailLink(subject, text); document.body.append(a); a.click(); a.remove(); }),
+    btn("Gmail", "", () => openExternal("https://mail.google.com/mail/?view=cm&fs=1&su=" + q(subject) + "&body=" + q(text))),
+    btn("Outlook", "", () => openExternal("https://outlook.live.com/mail/0/deeplink/compose?subject=" + q(subject) + "&body=" + q(text))),
+    btn(t("culto.mail.copy"), "", () => copyText(subject + "\n\n" + text))
+  );
+  if (navigator.share) row.append(btn(t("culto.mail.share"), "", () => { navigator.share({ title: subject, text }).catch(() => {}); }));
+  row.append(btn(t("culto.save.cancel"), "", closePanel));
+  p.append(row, el_("div", t("culto.mail.hint")));
+  p.lastChild.className = "none"; p.lastChild.style.marginTop = "6px";
+  Pager.layout();
 }
 
 // passagens recebidas (link com #p=… ou código colado): oferece abrir, juntar às atuais ou ignorar
