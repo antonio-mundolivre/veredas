@@ -87,3 +87,5 @@ section[data-tab] > h2:first-child { margin-top: 18px; }
 .dictctl { flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; }
 .dictctl .inl { margin: 0; white-space: nowrap; }
 .dictctl button { margin-top: 2px; }
+.fontrow { margin: 8px 0 4px; }
+.dictsample { margin: 4px 0; padding: 10px 14px; border: 1px solid var(--rule, #ccc); border-radius: 16px; font-size: 13.5px; line-height: 1.55; }

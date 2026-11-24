@@ -3,7 +3,17 @@
 //   entries:[[cabeça, definição, [sinônimos], [referências]], ...] }.
 // Os dicionários que vêm no app ficam em dicts/ (dicts/index.json lista os disponíveis); os importados ficam no armazenamento do app.
 const Dict = (() => {
-  const PK = "dictPrefs", MK = "dictMeta", ON = "dictMode", MAXHITS = 6;
+  const PK = "dictPrefs", MK = "dictMeta", ON = "dictMode", FK = "dictFont", MAXHITS = 6, GAP = 28;
+  // fontes do cartão: só as do próprio aparelho (nada é baixado); o app usa a mais próxima da lista que existir
+  const FONTS = [
+    { id: "palatino", stack: '"Palatino Linotype", Palatino, "Book Antiqua", "URW Palladio L", Georgia, serif' },
+    { id: "georgia", stack: 'Georgia, "Iowan Old Style", "Times New Roman", serif' },
+    { id: "charter", stack: 'Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif' },
+    { id: "moderna", stack: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif' },
+    { id: "humanista", stack: '"Gill Sans", "Gill Sans MT", Optima, Candara, "Trebuchet MS", "Segoe UI", sans-serif' },
+    { id: "verdana", stack: 'Verdana, Tahoma, "DejaVu Sans", sans-serif' }
+  ];
+  let fontId = "palatino";
   let prefs = { def: "biblico", off: {} }, meta = {}, builtin = [];
   let root = () => null, langOf = () => "pt", notify = () => {}, mode = false, card = null, btn = null, attached = false;
   const idx = {};                                   // cache: id -> índice carregado (ou, nos fragmentados, id|letra)
@@ -104,14 +114,18 @@ const Dict = (() => {
   // ---------- configuração ----------
   const ready = (async () => {
     try {
-      const r = await chrome.storage.local.get([PK, MK, ON]);
+      const r = await chrome.storage.local.get([PK, MK, ON, FK]);
       if (r[PK] && typeof r[PK] === "object") prefs = { def: r[PK].def || "biblico", off: r[PK].off || {} };
       if (r[MK] && typeof r[MK] === "object") meta = r[MK];
       mode = !!r[ON];
+      if (FONTS.some(f => f.id === r[FK])) fontId = r[FK];
     } catch (e) { /* sem armazenamento */ }
+    applyFont();
     try { builtin = ((await fetchJson("index.json")).dicts || []).map(b => ({ ...b, builtin: true })); } catch (e) { builtin = []; }
   })();
   const savePrefs = () => chrome.storage.local.set({ [PK]: prefs });
+  function applyFont() { const f = FONTS.find(x => x.id === fontId) || FONTS[0]; document.documentElement.style.setProperty("--dcfont", f.stack); }
+  async function setFont(id) { await ready; if (!FONTS.some(f => f.id === id)) return; fontId = id; applyFont(); try { await chrome.storage.local.set({ [FK]: id }); } catch (e) { /* ok */ } }
 
   async function list() {
     await ready;
@@ -160,23 +174,57 @@ const Dict = (() => {
 
   // ---------- cartão ----------
   const el = (tag, cls, txt) => { const n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; };
+  let cur = null;                                   // painel (dicionário) visível no cartão: { pane, page, pages, nav, prev, next, label }
+  const maxBody = () => Math.max(110, Math.min(Math.round(innerHeight * 0.26), 240));
+  function paginate(c) {                            // texto maior que o espaço vira páginas (colunas deslizadas), sem rolagem
+    const p = c.pane;
+    p.classList.remove("paged"); p.style.height = p.style.columnWidth = p.style.columnGap = p.style.width = ""; p.scrollLeft = 0;
+    c.page = 0; c.pages = 1;
+    const w = p.clientWidth;
+    if (w > 0 && p.offsetHeight > maxBody() + 2) {
+      p.classList.add("paged"); p.style.width = w + "px"; p.style.height = maxBody() + "px"; p.style.columnWidth = w + "px"; p.style.columnGap = GAP + "px";
+      c.pages = Math.max(1, Math.round((p.scrollWidth + GAP) / (w + GAP)));
+    }
+    paintNav(c);
+  }
+  function paintNav(c) {
+    c.nav.hidden = c.pages <= 1;
+    c.label.textContent = (c.page + 1) + " / " + c.pages;
+    c.prev.disabled = c.page <= 0; c.next.disabled = c.page >= c.pages - 1;
+  }
+  function turn(d) {
+    if (!cur || cur.pages <= 1) return false;
+    const n = Math.max(0, Math.min(cur.pages - 1, cur.page + d));
+    if (n === cur.page) return true;
+    cur.page = n; cur.pane.scrollLeft = n * (cur.pane.clientWidth + GAP); paintNav(cur);
+    return true;
+  }
   function ensureCard() {
     if (card) return card;
     card = el("div", "dictcard"); card.hidden = true; card.setAttribute("role", "dialog"); card.setAttribute("aria-label", T("dict.title"));
     document.body.append(card);
-    document.addEventListener("keydown", e => { if (e.key === "Escape" && !card.hidden) closeCard(); });
+    document.addEventListener("keydown", e => {
+      if (card.hidden) return;
+      if (e.key === "Escape") { closeCard(); return; }
+      const d = e.key === "ArrowRight" || e.key === "PageDown" ? 1 : e.key === "ArrowLeft" || e.key === "PageUp" ? -1 : 0;
+      if (d && cur && cur.pages > 1) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); turn(d); }   // as setas viram as páginas do cartão
+    }, true);
     document.addEventListener("click", e => { if (!card.hidden && !card.contains(e.target) && !(btn && btn.contains(e.target)) && !(e.target.closest && e.target.closest("#content .vt") && mode)) closeCard(); }, true);
+    let sx = 0, sy = 0;                              // deslizar o dedo vira a página
+    card.addEventListener("touchstart", e => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
+    card.addEventListener("touchend", e => { const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy; if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) turn(dx < 0 ? 1 : -1); }, { passive: true });
+    window.addEventListener("resize", () => { if (!card.hidden && cur) paginate(cur); });
     return card;
   }
-  function closeCard() { if (card) card.hidden = true; }
+  function closeCard() { if (card) card.hidden = true; cur = null; }
   async function show(word, rect) {
     ensureCard();
     const lang = langOf(), res = await lookup(word, lang), act = await active(lang);
-    card.replaceChildren();
-    const head = el("div", "dc-head"), x = el("button", "dc-x", "×");
+    card.replaceChildren(); cur = null;
+    const x = el("button", "dc-x", "×");   // a palavra aparece uma vez só: no título do verbete
     x.type = "button"; x.setAttribute("aria-label", T("dict.close")); x.onclick = closeCard;
-    head.append(el("strong", "dc-word", word), x);
-    card.append(head);
+    card.append(x);
+    let after = null;
     if (!act.length) {
       card.append(el("p", "dc-msg", T("dict.noDict", { lang: l2(lang).toUpperCase() })));
       const a = el("a", "dc-link", T("dict.openOpts")); a.href = chrome.runtime.getURL("options.html#biblias"); a.target = "_blank"; a.rel = "noopener";
@@ -186,6 +234,10 @@ const Dict = (() => {
       card.append(el("p", "dc-foot", act.map(d => d.name).join(" · ")));
     } else {
       const body = el("div", "dc-body"), tabs = el("div", "dc-tabs", "");
+      const nav = el("div", "dc-nav"), prev = el("button", "dc-pg", "‹"), next = el("button", "dc-pg", "›"), label = el("span", "dc-pgno", "");
+      prev.type = next.type = "button"; prev.setAttribute("aria-label", T("dict.prevPage")); next.setAttribute("aria-label", T("dict.nextPage"));
+      nav.append(prev, label, next); nav.hidden = true;
+      const foot = el("div", "dc-foot", "");
       const panes = res.map(r => {
         const pane = el("div", "dc-pane");
         r.hits.forEach(h => {
@@ -196,21 +248,30 @@ const Dict = (() => {
           if (h[3] && h[3].length) { const rf = el("div", "dc-refs"); rf.append(el("span", "dc-reflbl", T("dict.refs") + " "), ...h[3].map(s => el("span", "dc-ref", s))); e.append(rf); }
           pane.append(e);
         });
-        pane.append(el("div", "dc-foot", r.dict.name + (r.dict.license ? " · " + r.dict.license : "")));
         return pane;
       });
-      const pick = i => { panes.forEach((p, k) => { p.hidden = k !== i; }); [...tabs.children].forEach((b, k) => { b.classList.toggle("on", k === i); b.setAttribute("aria-selected", k === i); }); };
+      const state = panes.map(p => ({ pane: p, page: 0, pages: 1, nav, prev, next, label }));
+      const pick = i => {
+        panes.forEach((p, k) => { p.hidden = k !== i; });
+        [...tabs.children].forEach((b, k) => { b.classList.toggle("on", k === i); b.setAttribute("aria-selected", k === i); });
+        foot.textContent = res[i].dict.name + (res[i].dict.license ? " · " + res[i].dict.license : "");
+        cur = state[i]; paginate(cur);
+      };
+      prev.onclick = () => turn(-1); next.onclick = () => turn(1);
       if (res.length > 1) res.forEach((r, i) => { const b = el("button", "dc-tab", r.dict.short || r.dict.name); b.type = "button"; b.setAttribute("role", "tab"); b.onclick = () => pick(i); tabs.append(b); });
       if (res.length > 1) {
         tabs.hidden = true; card.append(tabs);
         const more = el("button", "dc-more", T("dict.alsoIn", { names: res.slice(1).map(r => r.dict.short || r.dict.name).join(", ") }));
         more.type = "button"; more.onclick = () => { tabs.hidden = false; more.hidden = true; pick(1); };
-        body.append(...panes, more);
+        body.append(...panes);
+        after = [more];
       } else body.append(...panes);
-      card.append(body); pick(0);
+      card.append(body, nav, ...(after || []), foot);
+      after = () => pick(0);                         // só depois de o cartão aparecer há largura para medir as páginas
     }
     card.classList.toggle("top", !!rect && rect.top > innerHeight * 0.5);
-    card.hidden = false; card.scrollTop = 0;
+    card.hidden = false;
+    if (typeof after === "function") after();
   }
 
   // ---------- palavra tocada ----------
@@ -264,8 +325,8 @@ const Dict = (() => {
     if (btn) { btn.innerHTML = ICON; btn.title = T("dict.btn"); btn.setAttribute("aria-label", T("dict.btn")); btn.onclick = () => setMode(!mode); btn.hidden = false; }
     if (!attached) { attached = true; document.addEventListener("click", onClick, true); }
     paint();
-    try { chrome.storage.onChanged.addListener(ch => { if (ch[ON] && !!ch[ON].newValue !== mode) { mode = !!ch[ON].newValue; paint(); } }); } catch (e) { /* ok */ }
+    try { chrome.storage.onChanged.addListener(ch => { if (ch[ON] && !!ch[ON].newValue !== mode) { mode = !!ch[ON].newValue; paint(); } if (ch[FK] && FONTS.some(f => f.id === ch[FK].newValue)) { fontId = ch[FK].newValue; applyFont(); } }); } catch (e) { /* ok */ }
   }
 
-  return { ready, attach, list, setDefault, setEnabled, importText, remove, active, lookup, setMode, closeCard, strip, fold, forms, shardOf, get mode() { return mode; } };
+  return { ready, attach, fonts: FONTS, getFont: () => fontId, setFont, applyFont, list, setDefault, setEnabled, importText, remove, active, lookup, setMode, closeCard, strip, fold, forms, shardOf, get mode() { return mode; } };
 })();

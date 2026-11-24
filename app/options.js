@@ -521,6 +521,12 @@ async function renderDict() {
   }
 }
 async function initDict() {
+  await Dict.ready;
+  const fsel = $("dictFont"), fs = $("dictFontSample");
+  const paintFont = () => { const f = Dict.fonts.find(x => x.id === Dict.getFont()) || Dict.fonts[0]; fs.style.fontFamily = f.stack; fsel.value = f.id; };
+  Dict.fonts.forEach(f => fsel.add(new Option(I18N.t("options.dictFont_" + f.id), f.id)));
+  paintFont();
+  fsel.onchange = async () => { await Dict.setFont(fsel.value); paintFont(); };
   $("dictImport").onclick = () => { $("dictFile").value = ""; $("dictFile").click(); };
   $("dictFile").onchange = async e => {
     const f = e.target.files[0];
