@@ -1,5 +1,5 @@
 const $ = s => document.querySelector(s);
-const PREFS_DEFAULT = { size: 22, theme: "light", width: 32, mode: "lines", align: "left" };
+const PREFS_DEFAULT = { size: 18, theme: "light", width: 32, mode: "flow", align: "justify" };
 let alignRefresh = () => {};
 let prefs = { ...PREFS_DEFAULT };
 let plan = null;
@@ -213,6 +213,7 @@ function openItems(items) {
   await loadPrefs();
   Pager.init();
   Narrator.attach({ root: () => $("#content"), viewport: () => $("#pager"), lang: () => version.lang || "pt", notify: m => { const e = $("#pageinfo"); if (e) e.textContent = m; } });
+  Dict.attach({ root: () => $("#content"), lang: () => version.lang || "pt", notify: m => { const e = $("#pageinfo"); if (e) e.textContent = m; } });
   applyPrefs();
   bindToolbar();
   $("#goCulto").onclick = () => { location.href = chrome.runtime.getURL("culto.html"); };

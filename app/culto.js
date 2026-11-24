@@ -1,7 +1,7 @@
 // Passagens: abre passagens avulsas (livro, capítulo, versículos) em poucos cliques ou digitando.
 // Cada passagem vira um cartão; dá para abrir várias e remover as que não servem.
 const $ = s => document.querySelector(s);
-const PREFS_DEFAULT = { size: 22, theme: "light", width: 32, mode: "lines", view: "single", align: "left" };
+const PREFS_DEFAULT = { size: 18, theme: "light", width: 32, mode: "flow", view: "single", align: "justify" };
 let alignRefresh = () => {};
 let prefs = { ...PREFS_DEFAULT };
 let version = VERSIONS[0];
@@ -832,6 +832,7 @@ function reloadAll() {
     advance: narrAdvance,
     notify: m => msg(m, true)
   });
+  Dict.attach({ root: () => (prefs.view === "all" ? $("#content") : els.get(activeId)), lang: () => version.lang || "pt", notify: m => msg(m) });
   applyPrefs();
 
   $("#version").onchange = async e => {

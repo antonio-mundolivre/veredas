@@ -1,0 +1,27 @@
+/* modo Dicionário e cartão de verbete */
+.pagebar .dictbtn { min-width: 0; width: 44px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.pagebar .dictbtn[hidden] { display: none; }
+.pagebar .dictbtn.on { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+body.dictmode #content .vt { cursor: help; }
+body.dictmode #content .selah { pointer-events: none; }
+.dictcard { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(72px + env(safe-area-inset-bottom, 0px)); width: min(560px, calc(100% - 24px)); max-height: 46vh; overflow: auto;
+  background: var(--bg); color: var(--fg); border: 1px solid var(--rule); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, .28); padding: 10px 14px 12px; z-index: 60;
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; text-align: left; hyphens: auto; }
+.dictcard[hidden] { display: none; }
+.dictcard.top { bottom: auto; top: calc(8px + env(safe-area-inset-top, 0px)); }
+.dictcard .dc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.dictcard .dc-word { font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dictcard .dc-x { width: 34px; height: 34px; padding: 0; font-size: 22px; line-height: 1; border-radius: 8px; flex: none; }
+.dictcard h4 { margin: 6px 0 2px; font-size: 18px; font-family: Georgia, "Times New Roman", serif; }
+.dictcard .dc-def { margin: 0 0 6px; }
+.dictcard .dc-via { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.dictcard .dc-refs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); margin: 4px 0 8px; }
+.dictcard .dc-ref { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--fg); border-radius: 6px; padding: 1px 7px; white-space: nowrap; }
+.dictcard .dc-entry + .dc-entry { border-top: 1px solid var(--rule); margin-top: 6px; padding-top: 2px; }
+.dictcard .dc-foot { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.dictcard .dc-msg { margin: 6px 0; }
+.dictcard .dc-link { color: var(--accent); }
+.dictcard .dc-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 6px; }
+.dictcard .dc-tab { padding: 5px 10px; font-size: 13px; border-radius: 999px; }
+.dictcard .dc-tab.on { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+@media (max-width: 520px) { .dictcard { bottom: calc(66px + env(safe-area-inset-bottom, 0px)); } }

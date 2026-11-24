@@ -1,5 +1,5 @@
 :root {
-  --size: 22px; --width: 32em;
+  --size: 18px; --width: 32em;
   --bg: #fbfaf7; --fg: #24211c; --muted: #8a8478; --accent: #7a5c2e; --bar: #f1eee6; --rule: #e4dfd2;
 }
 [data-theme="sepia"] { --bg: #f4ecd8; --fg: #433422; --muted: #8d7b62; --accent: #8a5a1f; --bar: #ebe0c5; --rule: #dccfae; }

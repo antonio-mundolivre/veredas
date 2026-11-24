@@ -493,6 +493,47 @@ async function initOffline() {
   await renderOffline();
 }
 
+// ---------- dicionários ----------
+function setDictMsg(msg, err) { const m = $("dictMsg"); m.textContent = msg || ""; m.className = "hint" + (err ? " err" : ""); }
+async function renderDict() {
+  const box = $("dictList");
+  box.replaceChildren();
+  const all = await Dict.list();
+  if (!all.length) { box.append(el("p", "hint", I18N.t("options.dictNone"))); return; }
+  for (const d of all) {
+    const row = el("div", "offrow dictrow");
+    const name = el("div", "offname", d.name);
+    const info = el("div", "offstatus" + (d.enabled ? " ok" : ""),
+      [String(d.lang || "").toUpperCase(), I18N.t("options.dictEntries", { n: (d.count || 0).toLocaleString(I18N.locale) }), d.builtin ? I18N.t("options.dictBuiltin") : I18N.t("options.dictImportedTag"), d.credit || d.license || ""].filter(Boolean).join(" · "));
+    const ctl = el("div", "offbtns dictctl");
+    const on = document.createElement("label"); on.className = "inl";
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = d.enabled;
+    cb.onchange = async () => { await Dict.setEnabled(d.id, cb.checked); renderDict(); };
+    on.append(cb, " ", el("span", "", I18N.t("options.dictActive")));
+    const def = document.createElement("label"); def.className = "inl";
+    const rb = document.createElement("input"); rb.type = "radio"; rb.name = "dictdef"; rb.checked = d.isDefault;
+    rb.onchange = async () => { await Dict.setDefault(d.id); renderDict(); };
+    def.append(rb, " ", el("span", "", I18N.t("options.dictDefault")));
+    ctl.append(on, def);
+    if (!d.builtin) ctl.append(btn(I18N.t("options.dictRemove"), async () => { if (confirm(I18N.t("options.dictConfirmRemove", { name: d.name }))) { await Dict.remove(d.id); renderDict(); } }));
+    row.append(name, info, ctl);
+    box.append(row);
+  }
+}
+async function initDict() {
+  $("dictImport").onclick = () => { $("dictFile").value = ""; $("dictFile").click(); };
+  $("dictFile").onchange = async e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      const m = await Dict.importText(await f.text());
+      setDictMsg(I18N.t("options.dictImported", { name: m.name, n: m.count.toLocaleString(I18N.locale) }));
+    } catch (err) { setDictMsg(I18N.t("options.dictErr", { msg: err.message || err }), true); }
+    renderDict();
+  };
+  await renderDict();
+}
+
 // ---------- geral ----------
 async function initGeneral() {
   const FLAGS = {
@@ -637,6 +678,7 @@ async function init() {
   await initOffline();
   initTabs();
   initNarr();
+  initDict();
   $("save").onclick = save;
   chrome.storage.onChanged.addListener(changes => {
     if (changes.version) $("gversion").value = changes.version.newValue;

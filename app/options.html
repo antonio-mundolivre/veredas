@@ -65,6 +65,17 @@
     <p id="offMsg" class="hint"></p>
   </section>
 
+  <section id="dictSection" data-tab="biblias">
+    <h2 data-i18n="options.dictTitle">Dicionários</h2>
+    <p class="hint" data-i18n="options.dictHint">Toque no botão do livro, no rodapé da leitura, para ligar o modo dicionário; depois toque numa palavra para ver o significado. O dicionário marcado como padrão aparece primeiro.</p>
+    <div id="dictList"></div>
+    <div class="trow">
+      <button id="dictImport" data-i18n="options.dictImport">Importar dicionário (arquivo)…</button>
+      <input type="file" id="dictFile" accept=".json,application/json" hidden>
+    </div>
+    <p id="dictMsg" class="hint"></p>
+  </section>
+
   <section data-tab="geral">
     <h2 data-i18n="options.generalTitle">Geral</h2>
     <div class="field wide"><span id="glangLabel" data-i18n="options.langLabel">Idioma / Language</span>
@@ -98,6 +109,7 @@
     <p class="hint" data-orich="options.aboutP2"><b>Bíblia Livre (BLIVRE)</b>, Almeida 1819 revisada em 2018, por Diego Santos, Mario Sérgio e Marco Teles, licença <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">Creative Commons Atribuição 4.0</a>. Obra original: sites.google.com/site/biblialivre (fevereiro de 2018), edição Textus Receptus; arquivo obtido em ebible.org/porbr2018. O texto foi convertido para o formato interno do Veredas (versículos sem numeração e sem marcação), sem alteração do conteúdo.</p>
     <p class="hint" data-orich="options.aboutP3"><b>World English Bible (WEB)</b>, domínio público.</p>
     <p class="hint" data-orich="options.aboutP4"></p>
+    <p class="hint" data-orich="options.aboutP5"></p>
   </section>
 
   <div class="savebar">
@@ -118,6 +130,7 @@
 <script src="source.js"></script>
 <script src="selah.js"></script>
 <script src="narrator.js"></script>
+<script src="dict.js"></script>
 <script src="options.js"></script>
 </body>
 </html>
