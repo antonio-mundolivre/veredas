@@ -3,11 +3,22 @@
   {
    "id": "biblico",
    "name": "Dicionário Bíblico Veredas",
+   "short": "Bíblico",
    "lang": "pt",
    "file": "biblico.json",
    "count": 395,
    "license": "Texto original do Veredas",
    "credit": "Dicionário Bíblico Veredas. Verbetes resumidos, de caráter introdutório e neutro entre as tradições cristãs."
+  },
+  {
+   "id": "figueiredo",
+   "name": "Dicionário de Cândido de Figueiredo",
+   "short": "Figueiredo",
+   "lang": "pt",
+   "shards": "figueiredo/{k}.json",
+   "count": 124529,
+   "license": "domínio público",
+   "credit": "Cândido de Figueiredo, Novo Dicionário da Língua Portuguesa (Projeto Gutenberg nº 31552). Ortografia da época."
   }
  ]
 }
