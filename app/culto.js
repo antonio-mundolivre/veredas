@@ -686,33 +686,52 @@ async function shareItems(kind) {
   const r = Share.render(kind, blocks, link, kind === "wa" ? 5500 : 3500);
   if (r.truncated) msg(t("share.tooLong")); else msg("");
   if (kind === "wa") openExternal(Share.waLink(r.text));
-  else showMailPanel(Share.subject(blocks), r.text);
+  else showMailPanel(Share.subject(blocks), r.text, Share.html(blocks, link));
 }
 
-// e-mail: o link mailto: só funciona se o aparelho tiver um app de e-mail configurado; por isso há alternativas
-function copyText(text) {
-  const done = () => msg(t("culto.mail.copied"));
-  if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, () => legacyCopy(text, done)); } else legacyCopy(text, done);
-}
+// e-mail: o texto formatado (HTML) vai para a área de transferência e a pessoa cola no corpo do e-mail.
+// Pelo link do e-mail só dá para mandar texto puro, e o Gmail o amassava num parágrafo só.
 function legacyCopy(text, done) {
   const ta = document.createElement("textarea"); ta.value = text; ta.style.cssText = "position:fixed;left:0;top:0;opacity:0";
   document.body.append(ta); ta.focus(); ta.select();
-  try { document.execCommand("copy"); done(); } catch (e) { msg(t("culto.mail.copyFail"), true); }
+  try { document.execCommand("copy"); done(true); } catch (e) { done(false); }
   ta.remove();
 }
-function showMailPanel(subject, text) {
+function richCopy(html, plain) {   // devolve uma Promise<boolean>; precisa ser chamada dentro do toque do usuário
+  return new Promise(ok => {
+    if (navigator.clipboard && window.ClipboardItem) {
+      try {
+        navigator.clipboard.write([new ClipboardItem({ "text/html": new Blob([html], { type: "text/html" }), "text/plain": new Blob([plain], { type: "text/plain" }) })])
+          .then(() => ok(true), () => ok(false));
+        return;
+      } catch (e) { /* tenta o outro jeito */ }
+    }
+    const d = document.createElement("div"); d.innerHTML = html; d.style.cssText = "position:fixed;left:0;top:0;opacity:0;background:#fff";
+    document.body.append(d);
+    const r = document.createRange(); r.selectNodeContents(d);
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    let done = false; try { done = document.execCommand("copy"); } catch (e) {}
+    sel.removeAllRanges(); d.remove(); ok(done);
+  });
+}
+function showMailPanel(subject, plain, html) {
   panelMode = "mail";
   const p = $("#panel"); p.hidden = false; p.replaceChildren();
   p.append(el_("h5", t("culto.mail.title")));
-  const row = document.createElement("div"); row.className = "prow";
   const q = s => encodeURIComponent(s);
+  const copyThen = open => () => {   // copia o e-mail formatado e abre o programa de e-mail só com o assunto
+    richCopy(html, plain).then(ok => msg(t(ok ? "culto.mail.copied" : "culto.mail.copyFail"), !ok));
+    if (open) open();
+  };
+  const row = document.createElement("div"); row.className = "prow";
   row.append(
-    btn(t("culto.mail.app"), "primary", () => { const a = document.createElement("a"); a.href = Share.mailLink(subject, text); document.body.append(a); a.click(); a.remove(); }),
-    btn("Gmail", "", () => openExternal("https://mail.google.com/mail/?view=cm&fs=1&su=" + q(subject) + "&body=" + q(text))),
-    btn("Outlook", "", () => openExternal("https://outlook.live.com/mail/0/deeplink/compose?subject=" + q(subject) + "&body=" + q(text))),
-    btn(t("culto.mail.copy"), "", () => copyText(subject + "\n\n" + text))
+    btn("Gmail", "primary", copyThen(() => openExternal("https://mail.google.com/mail/?view=cm&fs=1&su=" + q(subject)))),
+    btn("Outlook", "", copyThen(() => openExternal("https://outlook.live.com/mail/0/deeplink/compose?subject=" + q(subject)))),
+    btn(t("culto.mail.app"), "", copyThen(() => { const a = document.createElement("a"); a.href = "mailto:?subject=" + q(subject); document.body.append(a); a.click(); a.remove(); })),
+    btn(t("culto.mail.copy"), "", copyThen(null)),
+    btn(t("culto.mail.plain"), "", () => legacyCopy(subject + "\n\n" + plain, ok => msg(t(ok ? "culto.mail.plainCopied" : "culto.mail.copyFail"), !ok)))
   );
-  if (navigator.share) row.append(btn(t("culto.mail.share"), "", () => { navigator.share({ title: subject, text }).catch(() => {}); }));
+  if (navigator.share) row.append(btn(t("culto.mail.share"), "", () => { navigator.share({ title: subject, text: plain }).catch(() => {}); }));
   row.append(btn(t("culto.save.cancel"), "", closePanel));
   p.append(row, el_("div", t("culto.mail.hint")));
   p.lastChild.className = "none"; p.lastChild.style.marginTop = "6px";
