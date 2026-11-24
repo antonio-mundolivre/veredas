@@ -13,8 +13,8 @@ const Dict = (() => {
   // ---------- normalização (mesma regra do tools/dict-figueiredo.py) ----------
   const strip = s => String(s ?? "").toLowerCase().replace(/ß/g, "ss").replace(/æ/g, "ae").replace(/œ/g, "oe")
     .normalize("NFD").replace(/\p{M}/gu, "").replace(/[’'`]/g, "").replace(/[^\p{L}\p{N}\- ]/gu, " ").replace(/\s+/g, " ").trim();
-  // grafia antiga: ph→f, th→t, y→i, ct/pt→t, consoantes dobradas simples (exceto rr, ss)
-  const fold = s => strip(s).replace(/ph/g, "f").replace(/th/g, "t").replace(/y/g, "i").replace(/ct/g, "t").replace(/pt/g, "t").replace(/([bcdfgklmnptz])\1/g, "$1");
+  // grafia antiga: ph→f, th→t, y→i, ct/pt→t, rh→r, chr/chl→c, sc inicial→c, consoantes dobradas simples (exceto rr, ss)
+  const fold = s => strip(s).replace(/ph/g, "f").replace(/th/g, "t").replace(/y/g, "i").replace(/ct/g, "t").replace(/pt/g, "t").replace(/rh/g, "r").replace(/ch(?=[rl])/g, "c").replace(/^sc(?=[ei])/, "c").replace(/([bcdfgklmnptz])\1/g, "$1");
   const shardOf = k => { const c = fold(k)[0] || "_"; return /[a-z]/.test(c) ? c : "_"; };
 
   // formas de base prováveis (singular, masculino, infinitivo...); só valem quando a palavra exata não está no dicionário
@@ -200,7 +200,7 @@ const Dict = (() => {
         return pane;
       });
       const pick = i => { panes.forEach((p, k) => { p.hidden = k !== i; }); [...tabs.children].forEach((b, k) => { b.classList.toggle("on", k === i); b.setAttribute("aria-selected", k === i); }); };
-      if (res.length > 1) res.forEach((r, i) => { const b = el("button", "dc-tab", r.dict.name); b.type = "button"; b.setAttribute("role", "tab"); b.onclick = () => pick(i); tabs.append(b); });
+      if (res.length > 1) res.forEach((r, i) => { const b = el("button", "dc-tab", r.dict.short || r.dict.name); b.type = "button"; b.setAttribute("role", "tab"); b.onclick = () => pick(i); tabs.append(b); });
       if (res.length > 1) card.append(tabs);
       body.append(...panes); card.append(body); pick(0);
     }

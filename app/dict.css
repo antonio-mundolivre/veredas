@@ -13,7 +13,7 @@ body.dictmode #content .selah { pointer-events: none; }
 .dictcard .dc-word { font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dictcard .dc-x { width: 34px; height: 34px; padding: 0; font-size: 22px; line-height: 1; border-radius: 8px; flex: none; }
 .dictcard h4 { margin: 6px 0 2px; font-size: 18px; font-family: Georgia, "Times New Roman", serif; }
-.dictcard .dc-def { margin: 0 0 6px; }
+.dictcard .dc-def { margin: 0 0 6px; white-space: pre-line; }
 .dictcard .dc-via { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
 .dictcard .dc-refs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); margin: 4px 0 8px; }
 .dictcard .dc-ref { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--fg); border-radius: 6px; padding: 1px 7px; white-space: nowrap; }
