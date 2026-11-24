@@ -1,0 +1,13 @@
+{
+ "dicts": [
+  {
+   "id": "biblico",
+   "name": "Dicionário Bíblico Veredas",
+   "lang": "pt",
+   "file": "biblico.json",
+   "count": 395,
+   "license": "Texto original do Veredas",
+   "credit": "Dicionário Bíblico Veredas. Verbetes resumidos, de caráter introdutório e neutro entre as tradições cristãs."
+  }
+ ]
+}
