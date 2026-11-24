@@ -84,3 +84,6 @@ section[data-tab] > h2:first-child { margin-top: 18px; }
 .rateline output { min-width: 3.4em; text-align: right; font-variant-numeric: tabular-nums; }
 #narrBox { display: grid; gap: 10px; }
 #narrVoices { display: grid; gap: 8px; }
+.dictctl { flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; }
+.dictctl .inl { margin: 0; white-space: nowrap; }
+.dictctl button { margin-top: 2px; }

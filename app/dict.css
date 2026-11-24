@@ -25,3 +25,6 @@ body.dictmode #content .selah { pointer-events: none; }
 .dictcard .dc-tab { padding: 5px 10px; font-size: 13px; border-radius: 999px; }
 .dictcard .dc-tab.on { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 @media (max-width: 520px) { .dictcard { bottom: calc(66px + env(safe-area-inset-bottom, 0px)); } }
+
+.dictcard .dc-tabs[hidden], .dictcard .dc-more[hidden] { display: none; }
+.dictcard .dc-more { margin-top: 4px; padding: 5px 12px; font-size: 13px; border-radius: 999px; }

@@ -201,8 +201,13 @@ const Dict = (() => {
       });
       const pick = i => { panes.forEach((p, k) => { p.hidden = k !== i; }); [...tabs.children].forEach((b, k) => { b.classList.toggle("on", k === i); b.setAttribute("aria-selected", k === i); }); };
       if (res.length > 1) res.forEach((r, i) => { const b = el("button", "dc-tab", r.dict.short || r.dict.name); b.type = "button"; b.setAttribute("role", "tab"); b.onclick = () => pick(i); tabs.append(b); });
-      if (res.length > 1) card.append(tabs);
-      body.append(...panes); card.append(body); pick(0);
+      if (res.length > 1) {
+        tabs.hidden = true; card.append(tabs);
+        const more = el("button", "dc-more", T("dict.alsoIn", { names: res.slice(1).map(r => r.dict.short || r.dict.name).join(", ") }));
+        more.type = "button"; more.onclick = () => { tabs.hidden = false; more.hidden = true; pick(1); };
+        body.append(...panes, more);
+      } else body.append(...panes);
+      card.append(body); pick(0);
     }
     card.classList.toggle("top", !!rect && rect.top > innerHeight * 0.5);
     card.hidden = false; card.scrollTop = 0;
