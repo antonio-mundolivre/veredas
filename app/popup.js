@@ -120,7 +120,7 @@ function card(t) {
   if (!done && !st.finished) {
     const read = el("button", "primary wide", I18N.t("popup.read"));
     read.disabled = head0 === undefined;
-    read.onclick = () => openReader(asItems(t.id, [st.state === "todo" ? st.items[0] : head0]));
+    read.onclick = () => openReader(asItems(t.id, st.state === "todo" ? st.items : [head0]));   // todos os capítulos escolhidos para hoje, em sequência
     c.append(read);
   }
   c.append(el("div", "small pace", paceText(t) + (t.books.length > 1 && t.role === "sec" ? I18N.t("popup.inSequence") + t.books.map(b => BOOKS[b][0]).join(" → ") : "")));
