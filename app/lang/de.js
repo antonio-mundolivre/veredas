@@ -183,6 +183,7 @@ I18N.add("de", {
  "help.start.b": "Veredas ist ein täglicher Bibelleseplan mit aufgeräumtem Leser, einzelnen Bibelstellen für den Gottesdienst, Vorlesefunktion, Wörterbüchern und Texten, die ohne Internet funktionieren.\n\nZum Start: Tippen Sie auf dem Startbildschirm auf **Einstellungen** (das Zahnrad ⚙), wählen Sie einen **fertigen Plan** (zum Beispiel „Bibel in 1 Jahr“) oder stellen Sie Ihren eigenen zusammen und kehren Sie zum Start zurück. Fertig: Die Schaltfläche **Heutige Lesung** öffnet das Geplante.\n\nAlles wird automatisch auf diesem Gerät gespeichert. Nichts wird an Veredas-Server gesendet.",
  "help.start.t": "Erste Schritte",
  "help.title": "Veredas-Hilfe",
+ "help.toc": "Themen",
  "help.today.b": "Die Schaltfläche **Heutige Lesung** öffnet den Leser mit allem, was für heute geplant ist: zuerst die Kapitel des Hauptlesewegs, dann die der anderen. Hat sich am Plan nichts geändert, öffnet sie das bereits Vorgesehene; ist alles gelesen, ist die Schaltfläche deaktiviert.\n\nDie Schaltfläche **Diesen Leseweg lesen** in einer Karte öffnet nur diesen Leseweg.\n\nEs gibt kein Kästchen zum „Als gelesen markieren“ ohne Lesen: Ein Kapitel zählt erst als gelesen, nachdem Sie es im Leser gelesen haben (siehe „Der Leser“). Die einzige Ausnahme ist das Abwählen, um etwas erneut zu lesen.",
  "help.today.t": "Heutige Lesung",
  "lang.name.de": "Deutsch",

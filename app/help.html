@@ -21,7 +21,7 @@
 <header class="top">
   <div class="bar">
     <button id="home" type="button" data-i18n="web.home">Início</button>
-    <h1><img class="logo" src="icons/icon128.png" alt=""><span data-i18n="help.title">Ajuda do Veredas</span></h1>
+    <h1><img class="logo" src="icons/icon96.png" alt=""><span data-i18n="help.title">Ajuda do Veredas</span></h1>
   </div>
   <div class="searchrow">
     <div class="sbox">
@@ -34,7 +34,10 @@
 </header>
 <main>
   <p id="intro" class="intro" data-i18n="help.intro"></p>
-  <nav id="toc" class="toc" aria-label="Índice"></nav>
+  <details id="tocbox" class="tocbox">
+    <summary data-i18n="help.toc">Contextos</summary>
+    <nav id="toc" class="toc"></nav>
+  </details>
   <div id="sections"></div>
   <p id="none" class="none" hidden data-i18n="help.none"></p>
 </main>

@@ -32,7 +32,7 @@ function build() {
     const body = document.createElement("div"); body.className = "body"; render(I18N.t(`help.${id}.b`), body);
     d.append(sm, body); box.append(d);
     const a = document.createElement("a"); a.href = "#s-" + id; a.textContent = title;
-    a.onclick = e => { e.preventDefault(); d.hidden = false; d.open = true; d.scrollIntoView({ block: "start", behavior: "smooth" }); };
+    a.onclick = e => { e.preventDefault(); $("#tocbox").open = false; d.hidden = false; d.open = true; d.scrollIntoView({ block: "start", behavior: "smooth" }); };
     toc.append(a);
     secs.push({ id, el: d, title, body, sm, a, text: fold(title + " " + body.textContent) });
   });
@@ -67,7 +67,7 @@ function search() {
   secs.forEach(s => { clearMarks(s.el); });
   if (!words.length) {
     secs.forEach(s => { s.el.hidden = false; s.a.hidden = false; });
-    $("#toc").hidden = false; $("#intro").hidden = false; $("#none").hidden = true; $("#count").textContent = "";
+    $("#tocbox").hidden = false; $("#intro").hidden = false; $("#none").hidden = true; $("#count").textContent = "";
     return;
   }
   let found = 0;
@@ -76,7 +76,7 @@ function search() {
     s.el.hidden = !ok; s.a.hidden = !ok;
     if (ok) { found++; s.el.open = true; mark(s.el, words); }
   });
-  $("#toc").hidden = true; $("#intro").hidden = true;
+  $("#tocbox").hidden = true; $("#intro").hidden = true;
   $("#none").hidden = found > 0;
   $("#count").textContent = found ? I18N.t("help.results", { n: found }) : "";
   const first = $("mark"); if (first) first.scrollIntoView({ block: "center" });

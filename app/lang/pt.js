@@ -183,6 +183,7 @@ I18N.add("pt", {
  "help.start.b": "O Veredas é um plano de leitura bíblica diária com leitor limpo, passagens avulsas para o culto, narração, dicionários e textos que funcionam sem internet.\n\nPara começar: toque em **Configurar** (a engrenagem ⚙) na tela inicial, escolha um **modelo pronto** (por exemplo, “Bíblia em 1 ano”) ou monte o seu plano, e volte à tela inicial. Pronto: o botão **Leitura de hoje** abre o que está programado.\n\nTudo é salvo sozinho, neste aparelho. Nada é enviado a servidores do Veredas.",
  "help.start.t": "Primeiros passos",
  "help.title": "Ajuda do Veredas",
+ "help.toc": "Contextos",
  "help.today.b": "O botão **Leitura de hoje** abre o leitor com tudo o que está programado para hoje: primeiro os capítulos da trilha principal e, depois, os das outras trilhas. Se nada mudou na programação, ele abre o que já estava previsto; se tudo já foi lido, o botão fica desativado.\n\nO botão **Ler esta trilha**, dentro de um cartão, abre só aquela trilha.\n\nNão existe caixa para “marcar como lido” sem ler: um capítulo só conta como lido depois que você o lê no leitor (veja “O leitor”). A única exceção é desmarcar, para voltar a ler algo.",
  "help.today.t": "Leitura de hoje",
  "lang.name.de": "Deutsch",

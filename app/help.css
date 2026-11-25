@@ -20,7 +20,12 @@ h1 { font-size: 18px; margin: 0; display: flex; align-items: center; gap: 8px; }
 .meta { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 13px; color: var(--muted); min-height: 30px; }
 main { padding: 14px max(14px, env(safe-area-inset-right, 0px)) 40px max(14px, env(safe-area-inset-left, 0px)); }
 .intro { color: var(--muted); margin: 0 0 10px; }
-.toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+.tocbox { margin: 0 0 14px; }
+.tocbox > summary { justify-content: center; text-align: center; }
+.tocbox > summary::before { content: ""; }
+.tocbox > summary::after { content: "›"; font-size: 20px; line-height: 1; transition: transform .15s; }
+.tocbox[open] > summary::after { transform: rotate(90deg); }
+.toc { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 0 14px 16px; text-align: center; }
 .toc a { font-size: 13px; text-decoration: none; color: var(--accent); background: #fff; border: 1px solid var(--rule); border-radius: 999px; padding: 4px 11px; }
 .toc a:hover { background: #efe9d8; }
 details { background: var(--card); border-radius: 12px; margin: 0 0 10px; box-shadow: 0 1px 3px rgba(60, 40, 10, .12); }
@@ -35,7 +40,7 @@ details[open] > summary::before { transform: rotate(90deg); }
 .body li { margin: 0 0 6px; }
 mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1px; }
 .none { text-align: center; color: var(--muted); padding: 30px 10px; }
-.toc[hidden], .none[hidden] { display: none; }
+.tocbox[hidden], .none[hidden] { display: none; }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #17181c; --fg: #e4e1da; --muted: #9a958a; --accent: #d2a45e; --card: #21242a; --rule: #333640; --mark: #6b5514; }
   button, #q, .toc a { background: #2a2d35; color: var(--fg); border-color: #3c404a; }

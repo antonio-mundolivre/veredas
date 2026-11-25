@@ -77,7 +77,7 @@
   }
   const local = area("l:"), sync = area("s:");
   const noWin = () => Promise.reject(new Error("sem janelas na web"));
-  const manifest = { version: "3.5.7", name: "Veredas" };
+  const manifest = { version: "3.5.8", name: "Veredas" };
   window.chrome = {
     storage: { local, sync, onChanged: { addListener: f => listeners.add(f), removeListener: f => listeners.delete(f) } },
     runtime: {

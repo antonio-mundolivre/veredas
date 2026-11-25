@@ -183,6 +183,7 @@ I18N.add("en", {
  "help.start.b": "Veredas is a daily Bible reading plan with a clean reader, loose passages for services, narration, dictionaries and texts that work offline.\n\nTo begin: tap **Settings** (the gear ⚙) on the home screen, pick a **ready-made plan** (for example, “Bible in 1 year”) or build your own, then go back to the home screen. That’s it: the **Today’s reading** button opens what is scheduled.\n\nEverything is saved automatically on this device. Nothing is sent to Veredas servers.",
  "help.start.t": "Getting started",
  "help.title": "Veredas Help",
+ "help.toc": "Topics",
  "help.today.b": "The **Today’s reading** button opens the reader with everything scheduled for today: first the main track’s chapters, then the other tracks’. If nothing changed in the schedule, it opens what was already planned; if everything has been read, the button is disabled.\n\nThe **Read this track** button inside a card opens only that track.\n\nThere is no checkbox to “mark as read” without reading: a chapter only counts as read after you read it in the reader (see “The reader”). The only exception is unchecking, to read something again.",
  "help.today.t": "Today’s reading",
  "lang.name.de": "Deutsch",

@@ -183,6 +183,7 @@ I18N.add("fr", {
  "help.start.b": "Veredas est un plan de lecture biblique quotidien avec un lecteur épuré, des passages libres pour le culte, la narration, des dictionnaires et des textes qui fonctionnent hors connexion.\n\nPour commencer : touchez **Réglages** (l’engrenage ⚙) sur l’écran d’accueil, choisissez un **plan prêt à l’emploi** (par exemple « Bible en 1 an ») ou composez le vôtre, puis revenez à l’accueil. C’est tout : le bouton **Lecture du jour** ouvre ce qui est prévu.\n\nTout est enregistré automatiquement sur cet appareil. Rien n’est envoyé aux serveurs de Veredas.",
  "help.start.t": "Premiers pas",
  "help.title": "Aide de Veredas",
+ "help.toc": "Sujets",
  "help.today.b": "Le bouton **Lecture du jour** ouvre le lecteur avec tout ce qui est prévu aujourd’hui : d’abord les chapitres du parcours principal, puis ceux des autres parcours. Si rien n’a changé dans la programmation, il ouvre ce qui était déjà prévu ; si tout est lu, le bouton est désactivé.\n\nLe bouton **Lire ce parcours**, dans une carte, n’ouvre que ce parcours.\n\nIl n’y a pas de case pour « marquer comme lu » sans lire : un chapitre ne compte comme lu qu’après avoir été lu dans le lecteur (voir « Le lecteur »). La seule exception est de décocher, pour relire quelque chose.",
  "help.today.t": "Lecture du jour",
  "lang.name.de": "Deutsch",

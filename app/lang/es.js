@@ -183,6 +183,7 @@ I18N.add("es", {
  "help.start.b": "Veredas es un plan de lectura bíblica diaria con lector limpio, pasajes sueltos para el culto, narración, diccionarios y textos que funcionan sin internet.\n\nPara empezar: toque **Configurar** (el engranaje ⚙) en la pantalla de inicio, elija un **plan listo** (por ejemplo, “Biblia en 1 año”) o arme el suyo y vuelva al inicio. Listo: el botón **Lectura de hoy** abre lo programado.\n\nTodo se guarda solo, en este dispositivo. Nada se envía a servidores de Veredas.",
  "help.start.t": "Primeros pasos",
  "help.title": "Ayuda de Veredas",
+ "help.toc": "Contextos",
  "help.today.b": "El botón **Lectura de hoy** abre el lector con todo lo programado para hoy: primero los capítulos de la ruta principal y luego los de las demás rutas. Si nada cambió en la programación, abre lo que ya estaba previsto; si todo se leyó, el botón queda desactivado.\n\nEl botón **Leer esta ruta**, dentro de una tarjeta, abre solo esa ruta.\n\nNo hay casilla para “marcar como leído” sin leer: un capítulo solo cuenta como leído después de leerlo en el lector (vea “El lector”). La única excepción es desmarcar, para volver a leer algo.",
  "help.today.t": "Lectura de hoy",
  "lang.name.de": "Deutsch",
