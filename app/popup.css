@@ -40,3 +40,8 @@ button.icon { padding: 3px 9px; font-size: 17px; }
 select { padding: 5px; border: 1px solid #c9c1ae; border-radius: 8px; width: 100%; box-sizing: border-box; margin-top: 3px; }
 label.ver { display: block; font-size: 12px; color: #555; }
 .done { color: #3b7a57; font-weight: 600; }
+
+.card.isdone { padding-bottom: 10px; }
+.daydone { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 0; }
+.chip.small-chip { padding: 3px 10px 3px 7px; font-size: 12px; }
+.chip.small-chip input { width: 13px; height: 13px; }

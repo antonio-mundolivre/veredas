@@ -31,3 +31,11 @@ html.web body:not(.home-page) { height: 100dvh; }
   .qline #q { flex: 1 1 100%; min-width: 0; }
 }
 @media (max-width: 760px) { .finder { padding-left: 10px; padding-right: 10px; } }
+
+/* telas bem estreitas (iPhone SE): a informação da página fica numa linha própria, acima dos botões */
+@media (max-width: 400px) {
+  .pagebar { flex-wrap: wrap; gap: 6px; padding-top: 4px; }
+  .pagebar .mid { order: -1; flex: 1 0 100%; font-size: 12px; }
+  .pagebar #prev, .pagebar #next { flex: 1 1 0; padding: 8px 6px; font-size: 13px; }
+  .pagebar .narrbtn, .pagebar .dictbtn { width: 40px; height: 36px; padding: 0; }
+}

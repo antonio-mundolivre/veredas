@@ -56,29 +56,37 @@ function section(title, hint) {
 function card(t) {
   const st = trackStatus(t);
   const head0 = queueAt(t, 0, st.chs);
-  const today = todayStr();
-  const c = el("section", "card" + (st.state === "finished" ? " finished" : ""));
+  const done = st.state === "done";
+  const c = el("section", "card" + (st.state === "finished" ? " finished" : "") + (done ? " isdone" : ""));
 
   const head = el("div", "cardhead");
   const meta = t.loop ? I18N.t("popup.cycle", { cycle: t.cycles + 1, pos: Math.min(t.pos + 1, st.len), len: st.len })
     : st.finished ? I18N.t("popup.ofTotal", { len: st.len }) : I18N.t("popup.chapN", { pos: Math.min(t.pos + 1, st.len), len: st.len });
   head.append(el("span", "label", t.name), el("span", "small", meta));
+  c.append(head);
 
-  let ref, info;
-  if (st.state === "finished") { ref = I18N.t("popup.finished"); info = I18N.t("popup.chaptersRead", { len: st.len }); }
-  else if (st.state === "rest") { ref = I18N.t("popup.rest"); info = head0 !== undefined ? I18N.t("popup.nextLabel", { ref: lab(head0) }) : ""; }
-  else if (st.state === "done") { ref = I18N.t("popup.doneToday"); info = head0 !== undefined ? I18N.t("popup.nextLabel", { ref: lab(head0) }) : ""; }
-  else { ref = formatRefs(st.items); info = I18N.t("popup.today", { done: st.done, quota: st.total }); }
-  c.append(head, el("div", "ref" + (st.state === "done" ? " done" : ""), ref));
-  if (info) c.append(el("div", "small", info));
+  if (st.state === "finished") { c.append(el("div", "ref", I18N.t("popup.finished")), el("div", "small", I18N.t("popup.chaptersRead", { len: st.len }))); }
+  else if (st.state === "rest") { c.append(el("div", "ref", I18N.t("popup.rest")), el("div", "small", head0 !== undefined ? I18N.t("popup.nextLabel", { ref: lab(head0) }) : "")); }
+  else if (done) {
+    // dia concluído: só uma marca discreta; desmarcar reabre a leitura (os próximos capítulos, seguindo a programação)
+    const row = el("div", "daydone");
+    const l = el("label", "chip read small-chip");
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = true;
+    cb.onchange = async () => { cb.disabled = true; await reopenDay(t.id); await refresh(); };
+    l.append(cb, el("span", "", I18N.t("popup.dayDone")));
+    l.title = I18N.t("popup.tipDayDone");
+    row.append(l);
+    if (head0 !== undefined) row.append(el("span", "small", I18N.t("popup.nextLabel", { ref: short(head0) })));
+    c.append(row);
+  } else c.append(el("div", "ref", formatRefs(st.items)), el("div", "small", I18N.t("popup.today", { done: st.done, quota: st.total })));
 
   const bar = el("div", "bar"), fill = el("div");
   fill.style.width = (st.len ? (st.finished ? 100 : Math.min(100, t.pos / st.len * 100)) : 0) + "%";
   bar.append(fill); c.append(bar);
 
-  if (!st.finished) {
-    // ---- Hoje: o que já foi lido hoje (marcado) e o que falta (previsto)
-    const readToday = t.history.filter(h => h.d === today && h.c === t.cycles && h.p < t.pos && !t.holes.includes(h.p) && st.chs[h.p] !== undefined)
+  if (!st.finished && !done) {
+    // ---- Hoje: o que já foi lido hoje (marcado) e o que falta (programado)
+    const readToday = t.history.filter(h => isToday(h) && h.c === t.cycles && h.p < t.pos && !t.holes.includes(h.p) && st.chs[h.p] !== undefined)
       .filter((h, k, a) => a.findIndex(x => x.p === h.p) === k);
     const pend = st.items.slice(0, st.planned);
     if (readToday.length || pend.length) {
@@ -100,8 +108,8 @@ function card(t) {
     }
   }
 
-  // ---- Últimos lidos: desmarque para ler de novo
-  const rec = recentRead(t, 5).filter(r => !(r.d === today)); // os lidos hoje já aparecem em "Hoje"
+  // ---- Últimos lidos: desmarque para ler de novo (voltam para o começo da fila)
+  const rec = recentRead(t, 5);
   if (rec.length) {
     const s = section(I18N.t("popup.sectRecent"), I18N.t("popup.recentHint"));
     const row = el("div", "chips");
@@ -109,10 +117,13 @@ function card(t) {
     s.append(row); c.append(s);
   }
 
-  const read = el("button", "primary wide", I18N.t("popup.read"));
-  read.disabled = st.finished || head0 === undefined;
-  read.onclick = () => openReader(asItems(t.id, [st.state === "todo" ? st.items[0] : head0]));
-  c.append(read, el("div", "small pace", paceText(t) + (t.books.length > 1 && t.role === "sec" ? I18N.t("popup.inSequence") + t.books.map(b => BOOKS[b][0]).join(" → ") : "")));
+  if (!done && !st.finished) {
+    const read = el("button", "primary wide", I18N.t("popup.read"));
+    read.disabled = head0 === undefined;
+    read.onclick = () => openReader(asItems(t.id, [st.state === "todo" ? st.items[0] : head0]));
+    c.append(read);
+  }
+  c.append(el("div", "small pace", paceText(t) + (t.books.length > 1 && t.role === "sec" ? I18N.t("popup.inSequence") + t.books.map(b => BOOKS[b][0]).join(" → ") : "")));
   return c;
 }
 
@@ -120,6 +131,8 @@ function render() {
   const has = !!plan && plan.tracks.length > 0;
   $("empty").hidden = has;
   $("openToday").hidden = !has;
+  $("openToday").disabled = !has || todayItems(plan).length === 0;   // tudo concluído hoje: nada a abrir
+  $("openToday").title = $("openToday").disabled ? I18N.t("popup.allDone") : "";
   const box = $("cards");
   box.replaceChildren();
   if (has) plan.tracks.forEach(t => box.append(card(t)));

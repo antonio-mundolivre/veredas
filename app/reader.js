@@ -62,8 +62,8 @@ function addSection(tid, i) {
     btnTrack = mkBtn("", () => advance(sec, "track"));
     btnDone = mkBtn("", () => advance(sec, "done"));
     choices = document.createElement("div"); choices.className = "endchoice";
-    const hint = document.createElement("div"); hint.className = "endhint"; hint.textContent = I18N.t("reader.endHint");
-    choices.append(hint, btnChap, btnTrack, btnDone);
+    choices.title = I18N.t("reader.endHint");
+    choices.append(btnChap, btnTrack, btnDone);
     act.append(choices);
   }
   act.append(nt); el.append(act);
@@ -152,7 +152,7 @@ function renderError(sec, e) {
 
 // ---------- fim do capítulo: próximo capítulo, próxima trilha ou encerrar o dia ----------
 // Um capítulo por vez. Ao escolher qualquer opção, o capítulo atual é marcado como lido.
-const lastRef = g => `${CHAPTERS[g].pt} ${CHAPTERS[g].chapter}`;
+const lastRef = g => { const ab = I18N.abbr(), c = CHAPTERS[g]; return `${(ab && ab[c.book]) || c.pt} ${c.chapter}`; };   // nome abreviado
 
 function nextTrackOf(tid) {
   const k = plan ? plan.tracks.findIndex(t => t.id === tid) : -1;
@@ -186,7 +186,7 @@ function showDayEnd() {
   const ul = document.createElement("ul"); ul.className = "dayend-list";
   (plan ? plan.tracks : []).forEach(t => {
     const chs = trackChapters(t);
-    const gs = t.history.filter(x => x.d === today && x.c === t.cycles && chs[x.p] !== undefined).map(x => chs[x.p]);
+    const gs = t.history.filter(x => isToday(x) && x.c === t.cycles && chs[x.p] !== undefined).map(x => chs[x.p]);
     if (!gs.length) return;
     const li = document.createElement("li"), b = document.createElement("b");
     b.textContent = t.name + ": "; li.append(b, document.createTextNode(formatRefs([...new Set(gs)])));
@@ -215,7 +215,7 @@ async function refreshButtons() {
     if (g !== undefined) sec.btnChap.textContent = I18N.t("reader.nextChapter", { ref: lastRef(g) });
     const nt = nextTrackOf(sec.tid);
     sec.btnTrack.hidden = !nt;
-    if (nt) sec.btnTrack.textContent = I18N.t("reader.nextTrack", { name: nt.name });
+    if (nt) sec.btnTrack.textContent = I18N.t("reader.nextTrack", { ref: lastRef(trackStatus(nt).items[0]) });
     sec.btnDone.hidden = false;
     sec.btnDone.textContent = I18N.t("reader.finishDay");
     sec.note.textContent = g === undefined && !t.loop ? I18N.t("reader.finished") : "";
@@ -274,6 +274,7 @@ function openItems(items) {
     items = parseItems((readerItems || []).map(x => `${x.tid || "x"}:${x.i}`).join(","));
   }
   if (!items.length) items = todayItems(plan);
+  if (!items.length) { const t = plan && plan.tracks.find(x => queueAt(x, 0) !== undefined); if (t) items = [{ tid: t.id, i: queueAt(t, 0) }]; }   // tudo lido hoje: abre o próximo capítulo da primeira trilha
   await openItems(items);
   chrome.runtime.onMessage.addListener((msg, _sender, send) => {
     if (msg && msg.type === "win-show") {
