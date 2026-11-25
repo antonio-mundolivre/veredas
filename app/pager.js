@@ -4,7 +4,7 @@ const Pager = (() => {
   const GAP = 48;
   const hooks = { next: null };       // chamado ao tentar avançar na última página (ex.: carregar o próximo capítulo)
   let main, box, prevB, nextB, info;
-  let page = 0, pages = 1, W = 0, step = 1, raf = 0, wheelAt = 0, snapT = 0;
+  let page = 0, pages = 1, W = 0, step = 1, raf = 0, wheelAt = 0, snapT = 0, fixing = false;
 
   const clamp = p => Math.max(0, Math.min(pages - 1, p));
   const rectOf = e => { const r = e.getClientRects(); return r.length ? r[0] : null; };
@@ -33,23 +33,30 @@ const Pager = (() => {
     nextB.disabled = last && !hooks.next;
   }
   function goTo(p) {
+    // no Safari do iPhone a área útil muda quando as barras do navegador aparecem/somem e o aviso nem sempre chega:
+    // se a altura usada ficou diferente da área atual, refaz as páginas antes de mostrar
+    if (main && !fixing) { const a = area(); if (Math.abs(parseFloat(main.style.height) - Math.max(120, Math.floor(a.h))) > 1 && a.h > 0) { fixing = true; layoutNow(); goTo(p); fixing = false; return; } }
     page = clamp(p);
     main.scrollLeft = page * step;
     updateBar();
   }
 
+  // área útil da página (altura e largura dentro do #pager)
+  function area() {
+    const cs = getComputedStyle(box);
+    return { h: box.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom), innerW: box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) };
+  }
   function layoutNow(keep = true) {
     if (!main) return;
     const anchor = keep ? firstOnPage() : null;
-    const cs = getComputedStyle(box);
-    const h = box.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-    const innerW = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const { h, innerW } = area();
     main.style.width = "auto";
     const maxW = parseFloat(getComputedStyle(main).maxWidth);
     W = Math.max(120, Math.floor(Math.min(innerW, isNaN(maxW) ? innerW : maxW)));
     main.style.width = W + "px";
     main.style.height = Math.max(120, Math.floor(h)) + "px";
     main.style.columnGap = GAP + "px";
+    main.style.columnFill = "auto";   // enche uma página por vez (sem equilibrar o texto entre colunas)
     main.style.columnWidth = (W - 0.5) + "px";
     step = W + GAP;
     // conta as páginas pelo que realmente está desenhado (o scrollWidth pode vir velho no Safari do iPhone)
@@ -110,6 +117,12 @@ const Pager = (() => {
     new ResizeObserver(schedule).observe(box);
     new MutationObserver(schedule).observe(main, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["class", "hidden"] });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
+    window.addEventListener("resize", schedule);
+    window.addEventListener("orientationchange", schedule);
+    window.addEventListener("pageshow", schedule);
+    document.addEventListener("visibilitychange", schedule);
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", schedule);
+    [300, 1200, 3000].forEach(t => setTimeout(schedule, t));   // depois que o navegador assenta as barras
 
     // se algo rolar a coluna por conta própria (foco, scrollIntoView), volta para o limite de uma página
     main.addEventListener("scroll", () => {

@@ -89,3 +89,7 @@ section[data-tab] > h2:first-child { margin-top: 18px; }
 .dictctl button { margin-top: 2px; }
 .fontrow { margin: 8px 0 4px; }
 .dictsample { margin: 4px 0; padding: 10px 14px; border: 1px solid var(--rule, #ccc); border-radius: 16px; font-size: 13.5px; line-height: 1.55; }
+
+#home { display: none; }
+html.web #home { display: inline-block; }
+.savebar button { white-space: nowrap; }

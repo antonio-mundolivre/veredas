@@ -125,19 +125,21 @@ function mountPosition(t, root, after) {
     if (cur) chapSel.value = cur.chapter;
     text();
   };
-  bookSel.onchange = fillChaps;
-  root.querySelector(".f-setpos").onclick = () => {
+  // escolher o capítulo já define a nova posição (sem botão "Definir"); trocar de livro leva ao capítulo 1 dele
+  const apply = () => {
     const chs = trackChapters(t);
     const idx = chs.findIndex(g => CHAPTERS[g].book === +bookSel.value && CHAPTERS[g].chapter === +chapSel.value);
-    if (idx >= 0) { t.pos = idx; t.holes = []; text(); setDirty(); if (after) after(); }
+    if (idx >= 0 && idx !== t.pos) { t.pos = idx; t.holes = []; text(); setDirty(); if (after) after(); }
   };
+  bookSel.onchange = () => { fillChaps(); apply(); };
+  chapSel.onchange = apply;
   fill();
   return fill;
 }
 
 const positionHTML = () => `
   <div class="trow"><span>${E("options.nextToRead")}</span><b class="f-pos"></b></div>
-  <div class="trow"><select class="f-book"></select><select class="f-chap"></select><button class="f-setpos">${E("options.setPos")}</button></div>`;
+  <div class="trow"><select class="f-book"></select><select class="f-chap"></select></div>`;
 
 // ---------- trilha principal ----------
 function renderMain() {
@@ -686,6 +688,7 @@ async function init() {
   initNarr();
   initDict();
   $("save").onclick = save;
+  $("home").onclick = async () => { await save({ auto: true }); location.href = "index.html"; };   // só aparece no app web
   chrome.storage.onChanged.addListener(changes => {
     if (changes.version) $("gversion").value = changes.version.newValue;
   });
