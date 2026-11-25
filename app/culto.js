@@ -706,7 +706,7 @@ function richCopy(html, plain) {   // devolve uma Promise<boolean>; precisa ser 
         return;
       } catch (e) { /* tenta o outro jeito */ }
     }
-    const d = document.createElement("div"); d.innerHTML = html; d.style.cssText = "position:fixed;left:0;top:0;opacity:0;background:#fff";
+    const d = document.createElement("div"); d.replaceChildren(...new DOMParser().parseFromString(html, "text/html").body.childNodes); d.style.cssText = "position:fixed;left:0;top:0;opacity:0;background:#fff";
     document.body.append(d);
     const r = document.createRange(); r.selectNodeContents(d);
     const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);

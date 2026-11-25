@@ -322,7 +322,7 @@ const Dict = (() => {
     root = opts.root || root; langOf = opts.lang || langOf; notify = opts.notify || notify;
     await Promise.all([ready, I18N.ready]);
     btn = document.querySelector(opts.button || "#dictBtn");
-    if (btn) { btn.innerHTML = ICON; btn.title = T("dict.btn"); btn.setAttribute("aria-label", T("dict.btn")); btn.onclick = () => setMode(!mode); btn.hidden = false; }
+    if (btn) { btn.replaceChildren(...new DOMParser().parseFromString(ICON, "text/html").body.childNodes); btn.title = T("dict.btn"); btn.setAttribute("aria-label", T("dict.btn")); btn.onclick = () => setMode(!mode); btn.hidden = false; }
     if (!attached) { attached = true; document.addEventListener("click", onClick, true); }
     paint();
     try { chrome.storage.onChanged.addListener(ch => { if (ch[ON] && !!ch[ON].newValue !== mode) { mode = !!ch[ON].newValue; paint(); } if (ch[FK] && FONTS.some(f => f.id === ch[FK].newValue)) { fontId = ch[FK].newValue; applyFont(); } }); } catch (e) { /* ok */ }

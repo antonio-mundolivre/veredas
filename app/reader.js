@@ -206,7 +206,7 @@ function showDayEnd() {
   const mk = (tag, cls, txt) => { const n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; };
   const el = mk("section", "chapter dayend");
   const badge = mk("div", "de-badge");
-  badge.innerHTML = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  badge.replaceChildren(...new DOMParser().parseFromString('<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>', "text/html").body.childNodes);
   const cards = mk("div", "de-cards");
   let total = 0;
   (plan ? plan.tracks : []).forEach(t => {

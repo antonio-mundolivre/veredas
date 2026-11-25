@@ -11,6 +11,7 @@ const Narrator = (() => {
     spk: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
   };
   const icon = n => '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">' + SVG[n] + "</svg>";
+  const setIcon = (node, n) => node.replaceChildren(...new DOMParser().parseFromString(icon(n), "text/html").body.childNodes);
 
   let cfg = { ...DEF }, o = null, segs = [], i = 0, playing = false, active = false, tok = 0, timer = 0, cur = null;
   const $ = id => document.getElementById(id);
@@ -87,7 +88,7 @@ const Narrator = (() => {
   function setBtn() {
     const b = $("narrBtn"); if (!b) return;
     const on = active && playing;
-    b.innerHTML = icon(on ? "pause" : active ? "play" : "spk");
+    setIcon(b, on ? "pause" : active ? "play" : "spk");
     const k = on ? "narr.pause" : active ? "narr.resume" : "narr.listen";
     b.title = I18N.t(k); b.setAttribute("aria-label", I18N.t(k)); b.classList.toggle("on", active);
   }
@@ -175,7 +176,7 @@ const Narrator = (() => {
     const b = $("narrBtn"); if (!b) return;
     b.hidden = !supported; setBtn();
     b.onclick = toggle;
-    const set = (id, ic, key, fn) => { const e = $(id); if (!e) return; e.innerHTML = icon(ic); e.title = I18N.t(key); e.setAttribute("aria-label", I18N.t(key)); e.onclick = fn; };
+    const set = (id, ic, key, fn) => { const e = $(id); if (!e) return; setIcon(e, ic); e.title = I18N.t(key); e.setAttribute("aria-label", I18N.t(key)); e.onclick = fn; };
     set("narrPrev", "prev", "narr.prev", () => jump(-1));
     set("narrNext", "next", "narr.next", () => jump(1));
     set("narrStop", "stop", "narr.stop", stop);

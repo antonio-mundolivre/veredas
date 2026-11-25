@@ -557,7 +557,7 @@ async function initGeneral() {
     b.type = "button"; b.className = "langbtn"; b.dataset.lang = l;
     b.setAttribute("role", "radio"); b.setAttribute("aria-checked", String(l === I18N.lang));
     b.classList.toggle("on", l === I18N.lang);
-    b.innerHTML = '<svg class="flag" viewBox="0 0 30 20" aria-hidden="true">' + (FLAGS[l] || "") + "</svg>";
+    setHTML(b, '<svg class="flag" viewBox="0 0 30 20" aria-hidden="true">' + (FLAGS[l] || "") + "</svg>");
     const s = document.createElement("span"); s.textContent = I18N.t("lang.name." + l); b.appendChild(s);
     b.onclick = async () => {
       if (l === I18N.lang || box.dataset.busy) return;
