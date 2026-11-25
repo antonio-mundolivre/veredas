@@ -227,7 +227,7 @@ const Dict = (() => {
     let after = null;
     if (!act.length) {
       card.append(el("p", "dc-msg", T("dict.noDict", { lang: l2(lang).toUpperCase() })));
-      const a = el("a", "dc-link", T("dict.openOpts")); a.href = chrome.runtime.getURL("options.html#biblias"); a.target = "_blank"; a.rel = "noopener";
+      const a = el("a", "dc-link", T("dict.openOpts")); a.href = chrome.runtime.getURL("options.html#dicionarios"); a.target = "_blank"; a.rel = "noopener";
       card.append(a);
     } else if (!res.length) {
       card.append(el("p", "dc-msg", T("dict.noEntry", { w: word })));

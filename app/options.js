@@ -640,9 +640,9 @@ async function initNarr() {
   $("narrTest").onclick = () => Narrator.sample(I18N.lang, I18N.t("options.narrSample"));
 }
 
-const TABS = ["plano", "biblias", "geral", "sobre"];
+const TABS = ["geral", "plano", "biblias", "dicionarios", "sobre"];
 function showTab(name, opts) {
-  if (!TABS.includes(name)) name = "plano";
+  if (!TABS.includes(name)) name = "geral";
   document.querySelectorAll("section[data-tab]").forEach(s => { s.hidden = s.dataset.tab !== name; });
   document.querySelectorAll("#tabs [data-go]").forEach(b => {
     const on = b.dataset.go === name;

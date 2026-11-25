@@ -139,7 +139,8 @@ async function init() {
   VERSIONS.forEach(v => $("version").add(new Option(v.label, v.id)));
   $("version").value = (await loadVersion()).id;
   $("version").onchange = e => saveVersion(e.target.value);
-  $("openOptions").onclick = $("startSetup").onclick = () => chrome.runtime.openOptionsPage();
+  $("openOptions").onclick = () => chrome.runtime.openOptionsPage();
+  $("startSetup").onclick = () => { try { localStorage.setItem("optTab", "plano"); } catch (x) { /* sem storage */ } chrome.runtime.openOptionsPage(); };
   $("openHelp").onclick = () => { const u = chrome.runtime.getURL("help.html"); if (chrome.tabs && chrome.tabs.create) chrome.tabs.create({ url: u }); else location.href = u; };
   $("openToday").onclick = openToday;
   $("openCulto").onclick = () => showWindow("culto");
