@@ -63,7 +63,9 @@ function newTrack(o = {}) {
     pos: o.pos || 0,          // posição dentro da trilha (0 = primeiro capítulo)
     cycles: 0,                // ciclos completos (trilhas em loop)
     todayDate: "", todayDone: 0,
-    history: []               // [{d, p, c}] para desfazer
+    todayExtra: 0,            // capítulos extras escolhidos para hoje (só vale com todayDate = hoje)
+    holes: [],                // posições já lidas que o usuário desmarcou para reler (ficam no começo da fila)
+    history: []               // [{d, p, c}] capítulos lidos, do mais antigo ao mais novo (últimos 12)
   };
 }
 
@@ -108,38 +110,59 @@ function scheduledDaysBetween(t, from, to) {
   return n;
 }
 
+// Fila de leitura: primeiro os capítulos reabertos (holes), depois a partir de pos.
+// Devolve o índice global do capítulo na posição k da fila (ou undefined se acabou).
+function queueAt(t, k, chs = trackChapters(t)) {
+  const h = t.holes || [];
+  if (k < h.length) return chs[h[k]];
+  let p = t.pos + (k - h.length);
+  if (p >= chs.length) { if (!t.loop || !chs.length) return undefined; p %= chs.length; }
+  return chs[p];
+}
+const queueSize = (t, len) => (t.holes || []).length + (t.loop ? len : Math.max(0, len - t.pos));
+
 // Situação da trilha hoje: quanto ler, o que falta, em que estado está.
 function trackStatus(t) {
   const chs = trackChapters(t), len = chs.length, today = todayStr();
+  const holes = (t.holes || []).length;
   const done = t.todayDate === today ? t.todayDone : 0;
-  const finished = !t.loop && t.pos >= len;
+  const extra = t.todayDate === today ? (t.todayExtra || 0) : 0;
+  const finished = !t.loop && t.pos >= len && holes === 0;
   let quota = 0, overdue = false;
   if (!finished && len > 0 && isScheduled(t, today)) {
     if (t.pace.mode === "perDay") quota = t.pace.n;
     else {
-      const remStart = len - t.pos + done;               // o que faltava ao começar o dia
+      const remStart = len - t.pos + holes + done;       // o que faltava ao começar o dia
       const left = scheduledDaysBetween(t, today, t.pace.end);
       if (left > 0) quota = Math.ceil(remStart / left);   // recalcula sobre o que falta
       else { overdue = true; quota = Math.min(remStart, Math.max(1, Math.ceil(len / Math.max(1, t.pace.days)))); }
     }
   }
-  const remaining = finished || !len ? 0 : Math.max(0, Math.min(quota - done, t.loop ? len : len - t.pos));
+  const total = quota + extra;                            // leitura de hoje = prevista + extras
+  const remaining = finished || !len ? 0 : Math.max(0, Math.min(total - done, queueSize(t, len)));
   const items = [];
-  for (let k = 0; k < remaining; k++) {
-    let p = t.pos + k;
-    if (p >= len) { if (!t.loop) break; p %= len; }
-    items.push(chs[p]);
-  }
-  const state = finished ? "finished" : quota === 0 ? "rest" : remaining === 0 ? "done" : "todo";
-  return { chs, len, done, quota, remaining, items, state, overdue, finished };
+  for (let k = 0; k < remaining; k++) { const g = queueAt(t, k, chs); if (g === undefined) break; items.push(g); }
+  // dos pendentes, quantos aparecem em "Hoje" (reabertos + previstos); o resto são extras escolhidos
+  const reopened = Math.min(holes, remaining);
+  const planned = reopened + Math.min(remaining - reopened, Math.max(0, quota - done));
+  const state = finished ? "finished" : total === 0 ? "rest" : remaining === 0 ? "done" : "todo";
+  return { chs, len, done, quota, extra, total, remaining, planned, items, state, overdue, finished };
 }
 
-function nextChapters(t, n) {
+// Próximos n capítulos da fila (reabertos primeiro)
+function nextChapters(t, n, from = 0) {
   const chs = trackChapters(t), out = [];
-  for (let k = 0; k < Math.min(n, chs.length || 0); k++) {
-    let p = t.pos + k;
-    if (p >= chs.length) { if (!t.loop) break; p %= chs.length; }
-    out.push(chs[p]);
+  for (let k = from; k < from + n; k++) { const g = queueAt(t, k, chs); if (g === undefined) break; out.push(g); }
+  return out;
+}
+
+// Últimos capítulos lidos (do mais recente), prontos para desmarcar: [{p: posição, g: índice global}]
+function recentRead(t, n = 5) {
+  const chs = trackChapters(t), out = [], seen = new Set(), holes = new Set(t.holes || []);
+  for (let k = t.history.length - 1; k >= 0 && out.length < n; k--) {
+    const h = t.history[k];
+    if (h.c !== t.cycles || h.p >= t.pos || holes.has(h.p) || seen.has(h.p) || chs[h.p] === undefined) continue;
+    seen.add(h.p); out.push({ p: h.p, g: chs[h.p], d: h.d });
   }
   return out;
 }
@@ -233,7 +256,13 @@ async function migrateOld() {
 // Planos antigos não tinham papel: a primeira trilha é a principal, as demais são secundárias.
 function normalizePlan(p) {
   if (!p || !Array.isArray(p.tracks)) return p;
-  p.tracks.forEach((t, i) => { if (!t.role) t.role = i === 0 ? "main" : "sec"; if (!t.order) t.order = "canon"; });
+  p.tracks.forEach((t, i) => {
+    if (!t.role) t.role = i === 0 ? "main" : "sec";
+    if (!t.order) t.order = "canon";
+    t.history = Array.isArray(t.history) ? t.history : [];
+    t.todayExtra = t.todayExtra > 0 ? Math.floor(t.todayExtra) : 0;
+    t.holes = [...new Set(Array.isArray(t.holes) ? t.holes : [])].filter(h => Number.isInteger(h) && h >= 0 && h < t.pos).sort((a, b) => a - b);
+  });
   p.tracks.sort((a, b) => (a.role === "main" ? 0 : 1) - (b.role === "main" ? 0 : 1));
   return p;
 }
@@ -273,34 +302,59 @@ async function disableSync() {
   _syncFlag = false;
 }
 
-// ---------- marcar como lido / desfazer ----------
-// expected: índice global do capítulo esperado (só marca se for o próximo da trilha)
+// ---------- marcar como lido / desmarcar ----------
+// Marca como lidos os próximos "count" capítulos da fila da trilha (reabertos primeiro).
+// expected: índice global do capítulo que deve ser o primeiro da fila (evita marcar o errado).
 async function markTrackRead(tid, expected, count = 1) {
   const plan = await loadPlan();
   const t = plan && plan.tracks.find(x => x.id === tid);
   if (!t) return { ok: false, plan, track: null };
   const chs = trackChapters(t);
-  if (!chs.length || t.pos >= chs.length || (expected != null && chs[t.pos] !== expected)) return { ok: false, plan, track: t };
+  if (!chs.length || (expected != null && queueAt(t, 0, chs) !== expected) || queueAt(t, 0, chs) === undefined) return { ok: false, plan, track: t };
   const today = todayStr();
-  if (t.todayDate !== today) { t.todayDate = today; t.todayDone = 0; }
+  if (t.todayDate !== today) { t.todayDate = today; t.todayDone = 0; t.todayExtra = 0; }
   for (let k = 0; k < count; k++) {
-    if (t.pos >= chs.length) break;
-    t.history.push({ d: today, p: t.pos, c: t.cycles });
-    t.pos++; t.todayDone++;
-    if (t.pos >= chs.length && t.loop) { t.pos = 0; t.cycles++; }
+    if (queueAt(t, 0, chs) === undefined) break;
+    if (t.holes.length) {
+      t.history.push({ d: today, p: t.holes.shift(), c: t.cycles });
+      if (t.todayExtra > 0) t.todayExtra--; else t.todayDone++;   // reler um capítulo reaberto
+    } else {
+      t.history.push({ d: today, p: t.pos, c: t.cycles });
+      t.pos++; t.todayDone++;
+      if (t.pos >= chs.length && t.loop) { t.pos = 0; t.cycles++; t.holes = []; }
+    }
   }
-  t.history = t.history.slice(-8);
+  t.history = t.history.slice(-12);
   await savePlan(plan);
   return { ok: true, plan, track: t };
 }
 
-async function undoTrack(tid) {
+// Desmarca um capítulo já lido (posição p na trilha): ele volta para o começo da fila e entra na leitura de hoje.
+async function unmarkChapter(tid, p) {
   const plan = await loadPlan();
   const t = plan && plan.tracks.find(x => x.id === tid);
-  if (!t || !t.history.length) return { ok: false, plan, track: t || null };
-  const h = t.history.pop();
-  t.pos = h.p; t.cycles = h.c;
-  if (h.d === todayStr() && t.todayDate === h.d && t.todayDone > 0) t.todayDone--;
+  if (!t || !(p >= 0 && p < t.pos) || t.holes.includes(p)) return { ok: false, plan, track: t || null };
+  const today = todayStr();
+  if (t.todayDate !== today) { t.todayDate = today; t.todayDone = 0; t.todayExtra = 0; }
+  let k = -1;
+  for (let i = t.history.length - 1; i >= 0; i--) if (t.history[i].p === p && t.history[i].c === t.cycles) { k = i; break; }
+  if (k >= 0) {
+    const h = t.history.splice(k, 1)[0];
+    if (h.d === today && t.todayDone > 0) t.todayDone--; else t.todayExtra++;   // lido hoje: volta a pendente; lido antes: vira extra de hoje
+  } else t.todayExtra++;
+  t.holes = [...t.holes, p].sort((a, b) => a - b);
+  await savePlan(plan);
+  return { ok: true, plan, track: t };
+}
+
+// Define quantos capítulos extras ficam na leitura de hoje (delta relativo ao que já está pendente)
+async function addTodayExtra(tid, delta) {
+  const plan = await loadPlan();
+  const t = plan && plan.tracks.find(x => x.id === tid);
+  if (!t) return { ok: false, plan, track: null };
+  const today = todayStr();
+  if (t.todayDate !== today) { t.todayDate = today; t.todayDone = 0; t.todayExtra = 0; }
+  t.todayExtra = Math.max(0, (t.todayExtra || 0) + delta);
   await savePlan(plan);
   return { ok: true, plan, track: t };
 }

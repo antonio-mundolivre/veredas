@@ -54,17 +54,26 @@ function addSection(tid, i) {
   el.className = "chapter";
   for (const [tag, cls] of [["div", "kicker"], ["h1", ""], ["div", "body"]]) { const n = document.createElement(tag); if (cls) n.className = cls; el.append(n); }
   const act = document.createElement("div"); act.className = "actions";
-  const mk = document.createElement("button"); mk.className = "mark"; mk.hidden = true;
   const nt = document.createElement("span"); nt.className = "note";
-  act.append(mk, nt); el.append(act);
+  const mkBtn = (cls, fn) => { const b = document.createElement("button"); b.type = "button"; b.className = "choice " + cls; b.hidden = true; b.onclick = fn; return b; };
+  let choices = null, btnChap = null, btnTrack = null, btnDone = null;
+  if (tid) {   // capítulo de uma trilha: ao terminar, o leitor pergunta o que fazer (e marca como lido ao avançar)
+    btnChap = mkBtn("primary", () => advance(sec, "chapter"));
+    btnTrack = mkBtn("", () => advance(sec, "track"));
+    btnDone = mkBtn("", () => advance(sec, "done"));
+    choices = document.createElement("div"); choices.className = "endchoice";
+    const hint = document.createElement("div"); hint.className = "endhint"; hint.textContent = I18N.t("reader.endHint");
+    choices.append(hint, btnChap, btnTrack, btnDone);
+    act.append(choices);
+  }
+  act.append(nt); el.append(act);
   el.querySelector("h1").textContent = label(c);
   const sec = {
     tid, i, el, done: false, src: "",
     body: el.querySelector(".body"),
-    markBtn: el.querySelector(".mark"),
+    btnChap, btnTrack, btnDone,
     note: el.querySelector(".note")
   };
-  sec.markBtn.onclick = () => onMark(sec);
   $("#content").appendChild(el);
   sections.push(sec);
   decorate(sec);
@@ -141,38 +150,75 @@ function renderError(sec, e) {
   sec.body.replaceChildren(box);
 }
 
-// ---------- marcar como lido ----------
-async function onMark(sec) {
-  const r = await markTrackRead(sec.tid, sec.i);
-  if (r.ok) {
-    sec.done = true;
-    const t = r.track;
-    const chs = trackChapters(t);
-    sec.note.textContent = !t.loop && t.pos >= chs.length
-      ? I18N.t("reader.finished")
-      : I18N.t("reader.nextLabel", { ref: label(CHAPTERS[chs[t.pos]]) });
-  }
-  await refreshButtons();
+// ---------- fim do capítulo: próximo capítulo, próxima trilha ou encerrar o dia ----------
+// Um capítulo por vez. Ao escolher qualquer opção, o capítulo atual é marcado como lido.
+const lastRef = g => `${CHAPTERS[g].pt} ${CHAPTERS[g].chapter}`;
+
+function nextTrackOf(tid) {
+  const k = plan ? plan.tracks.findIndex(t => t.id === tid) : -1;
+  for (let j = k + 1; k >= 0 && j < plan.tracks.length; j++) if (trackStatus(plan.tracks[j]).state === "todo") return plan.tracks[j];
+  return null;
 }
 
+async function advance(sec, kind) {
+  [sec.btnChap, sec.btnTrack, sec.btnDone].forEach(b => b && (b.disabled = true));
+  await markTrackRead(sec.tid, sec.i);   // se o capítulo já estava lido (ou não é o da vez), não marca de novo
+  plan = await loadPlan();
+  if (kind === "chapter") {
+    const g = trackOf(sec.tid) ? queueAt(trackOf(sec.tid), 0) : undefined;
+    if (g !== undefined) return openItems([{ tid: sec.tid, i: g }]);
+  } else if (kind === "track") {
+    const nt = nextTrackOf(sec.tid);
+    if (nt) return openItems([{ tid: nt.id, i: trackStatus(nt).items[0] }]);
+  }
+  return showDayEnd();
+}
+
+// tela de encerramento: resumo do que foi lido hoje
+function showDayEnd() {
+  Narrator.stop();
+  const today = todayStr();
+  sections.length = 0;
+  const el = document.createElement("section"); el.className = "chapter dayend";
+  const h = document.createElement("h1"); h.textContent = I18N.t("reader.dayDone");
+  const p = document.createElement("p"); p.className = "dayend-text"; p.textContent = I18N.t("reader.dayDoneText");
+  el.append(h, p);
+  const ul = document.createElement("ul"); ul.className = "dayend-list";
+  (plan ? plan.tracks : []).forEach(t => {
+    const chs = trackChapters(t);
+    const gs = t.history.filter(x => x.d === today && x.c === t.cycles && chs[x.p] !== undefined).map(x => chs[x.p]);
+    if (!gs.length) return;
+    const li = document.createElement("li"), b = document.createElement("b");
+    b.textContent = t.name + ": "; li.append(b, document.createTextNode(formatRefs([...new Set(gs)])));
+    ul.append(li);
+  });
+  if (ul.children.length) el.append(ul);
+  const act = document.createElement("div"); act.className = "actions";
+  const close = document.createElement("button"); close.type = "button"; close.className = "choice primary"; close.textContent = I18N.t("reader.closeWindow");
+  close.onclick = () => { if (document.documentElement.classList.contains("web")) { location.href = "index.html"; return; } window.close(); };   // no app web volta ao início; na extensão fecha a janela
+  act.append(close); el.append(act);
+  $("#content").replaceChildren(el);
+  chrome.storage.local.set({ readerItems: [] });
+  document.title = I18N.t("reader.dayDone") + " — Veredas";
+  Pager.hooks.next = null; Pager.refreshBar(); Pager.reset();
+}
+
+// botões do fim do capítulo: mostram para onde cada escolha leva
 async function refreshButtons() {
   plan = await loadPlan();
   for (const sec of sections) {
     const t = trackOf(sec.tid);
-    if (!t) continue; // capítulo avulso (sem trilha): sem botão
-    const b = sec.markBtn;
-    b.hidden = false;
-    if (sec.done) {
-      b.textContent = I18N.t("reader.read");
-      b.disabled = true;
-      b.classList.add("done");
-      continue;
-    }
-    const chs = trackChapters(t);
-    const isCurrent = t.pos < chs.length && chs[t.pos] === sec.i;
-    b.textContent = I18N.t("reader.markRead");
-    b.disabled = !isCurrent;
-    b.title = isCurrent ? "" : I18N.t("reader.notNext");
+    if (!t || !sec.btnChap) continue;   // capítulo avulso (sem trilha): sem botões
+    const isHead = queueAt(t, 0) === sec.i;
+    const g = queueAt(t, isHead ? 1 : 0);
+    sec.btnChap.hidden = g === undefined;
+    if (g !== undefined) sec.btnChap.textContent = I18N.t("reader.nextChapter", { ref: lastRef(g) });
+    const nt = nextTrackOf(sec.tid);
+    sec.btnTrack.hidden = !nt;
+    if (nt) sec.btnTrack.textContent = I18N.t("reader.nextTrack", { name: nt.name });
+    sec.btnDone.hidden = false;
+    sec.btnDone.textContent = I18N.t("reader.finishDay");
+    sec.note.textContent = g === undefined && !t.loop ? I18N.t("reader.finished") : "";
     decorate(sec);
   }
 }
@@ -180,7 +226,7 @@ async function refreshButtons() {
 // ---------- continuar lendo ----------
 function updateNextButton() {
   const last = sections[sections.length - 1];
-  Pager.hooks.next = last && last.i + 1 < CHAPTERS.length ? loadNextChapter : null;
+  Pager.hooks.next = last && !last.tid && last.i + 1 < CHAPTERS.length ? loadNextChapter : null;   // em trilha, quem avança é o fim do capítulo
   Pager.refreshBar();
 }
 async function loadNextChapter() {
@@ -193,14 +239,16 @@ async function loadNextChapter() {
 }
 
 // ---------- início ----------
-// Troca o conteúdo da janela pelos capítulos pedidos (a janela é sempre a mesma)
+// Troca o conteúdo da janela pelo capítulo pedido (a janela é sempre a mesma). Vale só o primeiro item:
+// os seguintes vêm do fim do capítulo (próximo capítulo / próxima trilha), na ordem do plano.
 function openItems(items) {
+  Narrator.stop();
   $("#content").replaceChildren();
   sections.length = 0;
-  if (!items.length) items = [{ tid: "", i: 0 }];
-  items.forEach(it => addSection(it.tid, it.i));
-  chrome.storage.local.set({ readerItems: items });   // para voltar do culto para a mesma leitura
-  document.title = sections.map(s => label(CHAPTERS[s.i])).join(" · ") + " — Veredas · " + version.short;
+  const first = items[0] || { tid: "", i: 0 };
+  addSection(first.tid, first.i);
+  chrome.storage.local.set({ readerItems: [first] });   // para voltar do culto para a mesma leitura
+  document.title = label(CHAPTERS[first.i]) + " — Veredas · " + version.short;
   updateNextButton();
   Pager.reset();
   return Promise.all(sections.map(loadSection)).then(refreshButtons);

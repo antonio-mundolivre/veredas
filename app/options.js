@@ -129,7 +129,7 @@ function mountPosition(t, root, after) {
   root.querySelector(".f-setpos").onclick = () => {
     const chs = trackChapters(t);
     const idx = chs.findIndex(g => CHAPTERS[g].book === +bookSel.value && CHAPTERS[g].chapter === +chapSel.value);
-    if (idx >= 0) { t.pos = idx; text(); setDirty(); if (after) after(); }
+    if (idx >= 0) { t.pos = idx; t.holes = []; text(); setDirty(); if (after) after(); }
   };
   fill();
   return fill;
@@ -261,7 +261,7 @@ function renderMain() {
 
   q(".f-reset").onclick = () => {
     if (!confirm(I18N.t("options.confirmResetTrack", { name: t.name }))) return;
-    t.pos = 0; t.cycles = 0; t.history = []; t.todayDone = 0;
+    t.pos = 0; t.cycles = 0; t.history = []; t.holes = []; t.todayDone = 0; t.todayExtra = 0;
     fillPos(); updPreview(); setDirty();
   };
   updPreview();
@@ -354,7 +354,7 @@ function renderSec() {
     const fill = mountPosition(t, row);
     row.querySelector(".f-reset").onclick = () => {
       if (!confirm(I18N.t("options.confirmReset", { name: t.name }))) return;
-      t.pos = 0; t.cycles = 0; t.history = []; t.todayDone = 0;
+      t.pos = 0; t.cycles = 0; t.history = []; t.holes = []; t.todayDone = 0; t.todayExtra = 0;
       fill(); setDirty();
     };
     list.append(row);
@@ -600,7 +600,7 @@ async function initGeneral() {
   };
   $("resetAll").onclick = async () => {
     if (!confirm(I18N.t("options.confirmResetAll"))) return;
-    [draft.main, ...draft.secTracks].forEach(t => { t.pos = 0; t.cycles = 0; t.history = []; t.todayDone = 0; });
+    [draft.main, ...draft.secTracks].forEach(t => { t.pos = 0; t.cycles = 0; t.history = []; t.holes = []; t.todayDone = 0; t.todayExtra = 0; });
     await save();
   };
 }

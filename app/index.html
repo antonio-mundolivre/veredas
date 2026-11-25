@@ -21,7 +21,10 @@
     <button id="openOptions" class="icon" title="Configurar plano de leitura" data-i18n-title="popup.optionsTip">⚙</button>
   </div>
 
-  <button id="openCulto" class="wide" data-i18n="popup.passages">⛪ Passagens</button>
+  <div class="toprow">
+    <button id="openToday" class="primary" hidden data-i18n="popup.openToday">Abrir leitura de hoje</button>
+    <button id="openCulto" data-i18n="popup.passages">⛪ Passagens</button>
+  </div>
 
   <section id="empty" class="card" hidden>
     <p data-i18n="popup.noPlan">Você ainda não tem um plano de leitura.</p>
@@ -29,8 +32,6 @@
   </section>
 
   <div id="cards"></div>
-
-  <button id="openToday" class="wide" hidden data-i18n="popup.openToday">Abrir leitura de hoje</button>
 
   <label class="ver"><span data-i18n="popup.bibleVersion">Versão da Bíblia</span>
     <select id="version"></select>
