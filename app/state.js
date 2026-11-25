@@ -160,14 +160,12 @@ function nextChapters(t, n, from = 0) {
   return out;
 }
 
-// Últimos capítulos lidos antes de hoje (do mais recente), prontos para desmarcar: [{p: posição, g: índice global}]
+// Últimos capítulos lidos (do mais recente), prontos para desmarcar: [{p: posição, g: índice global}]
 // Tudo que vem antes de pos e não foi reaberto conta como lido; assim também vale para quem começou a trilha no meio.
 function recentRead(t, n = 5) {
   const chs = trackChapters(t), out = [], holes = new Set(t.holes || []);
-  const hoje = new Set(t.history.filter(h => isToday(h) && h.c === t.cycles).map(h => h.p));   // esses aparecem em "Hoje"
   for (let p = Math.min(t.pos, chs.length) - 1; p >= 0 && out.length < n; p--) {
-    if (holes.has(p) || hoje.has(p)) continue;
-    out.push({ p, g: chs[p] });
+    if (!holes.has(p)) out.push({ p, g: chs[p] });
   }
   return out;
 }

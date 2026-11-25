@@ -3,9 +3,10 @@ h1 { font-size: 17px; margin: 0; display: flex; align-items: center; gap: 8px; }
 .logo { width: 22px; height: 22px; border-radius: 5px; }
 .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .toprow { display: flex; gap: 8px; margin-bottom: 12px; }
-.toprow button { flex: 1; padding: 10px 8px; font-weight: 600; border-radius: 10px; }
+.toprow button { flex: 1; padding: 10px 8px; font-weight: 600; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
+.toprow .ico { flex: none; }
 .toprow button[hidden] { display: none; }
-.toprow #openToday { flex: 1.5; }
+.toprow #openToday { flex: 1.25; }
 .card { background: #fff; border-radius: 14px; padding: 12px 14px 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(60, 40, 10, .12); }
 .card.finished { opacity: .8; }
 .card p { margin: 0 0 8px; }

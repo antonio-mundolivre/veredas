@@ -85,17 +85,7 @@ function card(t) {
   bar.append(fill); c.append(bar);
 
   if (!st.finished && !done) {
-    // ---- Hoje: o que já foi lido hoje (marcado) e o que falta (programado)
-    const readToday = t.history.filter(h => isToday(h) && h.c === t.cycles && h.p < t.pos && !t.holes.includes(h.p) && st.chs[h.p] !== undefined)
-      .filter((h, k, a) => a.findIndex(x => x.p === h.p) === k);
-    const pend = st.items.slice(0, st.planned);
-    if (readToday.length || pend.length) {
-      const s = section(I18N.t("popup.sectToday"));
-      const row = el("div", "chips");
-      readToday.forEach(h => row.append(chip(st.chs[h.p], true, "read", () => unmarkChapter(t.id, h.p), I18N.t("popup.tipUnmark"))));
-      pend.forEach((g, k) => row.append(chip(g, false, "todo", () => markTrackRead(t.id, pend[0], k + 1), I18N.t("popup.tipMark"))));
-      s.append(row); c.append(s);
-    }
+    // (o que está programado para hoje já aparece no alto do card; aqui só se escolhem extras)
     // ---- Extras de hoje: os já incluídos (marcados) e os próximos candidatos
     const extras = st.items.slice(st.planned);
     const cands = nextChapters(t, 3, st.remaining);
