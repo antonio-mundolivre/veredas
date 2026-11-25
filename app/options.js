@@ -37,7 +37,7 @@ function setStatus(msg, err) {
   $("status").className = err ? "err" : "";
 }
 let saveTimer = null;
-// Salva sozinho logo depois de qualquer alteração (o botão "Salvar agora" continua disponível)
+// Salva sozinho logo depois de qualquer alteração
 function setDirty() {
   setStatus(I18N.t("options.saving"));
   clearTimeout(saveTimer);
@@ -139,7 +139,7 @@ function mountPosition(t, root, after) {
 
 const positionHTML = () => `
   <div class="trow"><span>${E("options.nextToRead")}</span><b class="f-pos"></b></div>
-  <div class="trow"><select class="f-book"></select><select class="f-chap"></select></div>`;
+  <div class="trow posrow"><select class="f-book"></select><select class="f-chap"></select></div>`;
 
 // ---------- trilha principal ----------
 function renderMain() {
@@ -687,7 +687,6 @@ async function init() {
   initTabs();
   initNarr();
   initDict();
-  $("save").onclick = save;
   $("home").onclick = async () => { await save({ auto: true }); location.href = "index.html"; };   // só aparece no app web
   chrome.storage.onChanged.addListener(changes => {
     if (changes.version) $("gversion").value = changes.version.newValue;

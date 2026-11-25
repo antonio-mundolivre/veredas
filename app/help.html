@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Veredas">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#7a5c2e">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/app-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="manifest" href="manifest.webmanifest">
+
+  <meta charset="UTF-8">
+  <title data-i18n="help.title">Ajuda do Veredas</title>
+  <link rel="stylesheet" href="help.css">
+<title>Veredas</title>
+<link rel="stylesheet" href="web.css">
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <button id="home" type="button" data-i18n="web.home">Início</button>
+    <h1><img class="logo" src="icons/icon128.png" alt=""><span data-i18n="help.title">Ajuda do Veredas</span></h1>
+  </div>
+  <div class="searchrow">
+    <div class="sbox">
+      <svg class="ico" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+      <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Pesquisar na ajuda…" data-i18n-placeholder="help.search" data-i18n-aria-label="help.searchAria" aria-label="Pesquisar na ajuda">
+      <button id="clear" type="button" hidden data-i18n-aria-label="help.clear" aria-label="Limpar pesquisa">×</button>
+    </div>
+    <div class="meta"><span id="count" role="status" aria-live="polite"></span><button id="toggleAll" type="button" data-i18n="help.expand">Abrir tudo</button></div>
+  </div>
+</header>
+<main>
+  <p id="intro" class="intro" data-i18n="help.intro"></p>
+  <nav id="toc" class="toc" aria-label="Índice"></nav>
+  <div id="sections"></div>
+  <p id="none" class="none" hidden data-i18n="help.none"></p>
+</main>
+<script src="web-shim.js"></script>
+  <script src="bible-data.js"></script>
+<script src="lang/books.js"></script>
+<script src="i18n.js"></script>
+<script src="lang/pt.js"></script>
+<script src="lang/en.js"></script>
+<script src="lang/es.js"></script>
+<script src="lang/fr.js"></script>
+<script src="lang/de.js"></script>
+<script src="help.js"></script>
+</body>
+</html>

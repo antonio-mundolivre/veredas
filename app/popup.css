@@ -3,10 +3,10 @@ h1 { font-size: 17px; margin: 0; display: flex; align-items: center; gap: 8px; }
 .logo { width: 22px; height: 22px; border-radius: 5px; }
 .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .toprow { display: flex; gap: 8px; margin-bottom: 12px; }
-.toprow button { flex: 1; padding: 10px 8px; font-weight: 600; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
+.toprow button { flex: 0 0 auto; padding: 10px 16px; font-weight: 600; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
 .toprow .ico { flex: none; }
 .toprow button[hidden] { display: none; }
-.toprow #openToday { flex: 1.25; }
+.toprow { justify-content: flex-start; flex-wrap: wrap; }
 .card { background: #fff; border-radius: 14px; padding: 12px 14px 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(60, 40, 10, .12); }
 .card.finished { opacity: .8; }
 .card p { margin: 0 0 8px; }
@@ -36,7 +36,7 @@ button:hover:not(:disabled) { background: #efe9d8; }
 button:disabled { opacity: .5; cursor: default; }
 button.primary { background: #7a5c2e; color: #fff; border-color: #7a5c2e; }
 button.primary:hover:not(:disabled) { background: #664c25; }
-button.wide { width: 100%; margin-top: 10px; padding: 9px; font-weight: 600; border-radius: 10px; }
+button.wide { display: block; width: auto; margin: 10px auto 0; padding: 9px 22px; font-weight: 600; border-radius: 10px; }
 button.icon { padding: 3px 9px; font-size: 17px; }
 select { padding: 5px; border: 1px solid #c9c1ae; border-radius: 8px; width: 100%; box-sizing: border-box; margin-top: 3px; }
 label.ver { display: block; font-size: 12px; color: #555; }
@@ -46,3 +46,6 @@ label.ver { display: block; font-size: 12px; color: #555; }
 .daydone { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 0; }
 .chip.small-chip { padding: 3px 10px 3px 7px; font-size: 12px; }
 .chip.small-chip input { width: 13px; height: 13px; }
+
+.headbtns { display: flex; gap: 6px; align-items: center; }
+.headbtns .icon { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 34px; padding: 0 8px; font-size: 16px; line-height: 1; }

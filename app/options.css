@@ -92,4 +92,13 @@ section[data-tab] > h2:first-child { margin-top: 18px; }
 
 #home { display: none; }
 html.web #home { display: inline-block; }
-.savebar button { white-space: nowrap; }
+
+/* livro e capítulo na mesma linha (quebra só se não couber) */
+.posrow { flex-wrap: nowrap; }
+.posrow select { flex: 1 1 0; min-width: 0; max-width: 260px; }
+.posrow select.f-chap { flex: 0 1 8em; }
+/* botões com a largura do nome mais as margens (não esticam) */
+button { width: auto; }
+.track button, .tpl button, section > button, .trow button { justify-self: start; }
+.tpl { align-items: flex-start; }
+.tpl > p { align-self: stretch; }

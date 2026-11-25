@@ -140,6 +140,7 @@ async function init() {
   $("version").value = (await loadVersion()).id;
   $("version").onchange = e => saveVersion(e.target.value);
   $("openOptions").onclick = $("startSetup").onclick = () => chrome.runtime.openOptionsPage();
+  $("openHelp").onclick = () => { const u = chrome.runtime.getURL("help.html"); if (chrome.tabs && chrome.tabs.create) chrome.tabs.create({ url: u }); else location.href = u; };
   $("openToday").onclick = openToday;
   $("openCulto").onclick = () => showWindow("culto");
   await refresh();

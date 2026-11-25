@@ -8,7 +8,9 @@ button, select { min-height: 36px; }
 
 /* início (antigo popup) vira página inteira */
 body.home-page { width: auto; max-width: 560px; margin: 0 auto; padding: calc(14px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom)); box-sizing: border-box; font-size: 16px; }
-.home-page button { font-size: 15px; padding: 10px 12px; }
+.home-page button { font-size: 15px; padding: 10px 16px; }
+.home-page button.wide { padding: 10px 24px; }
+.home-page .headbtns .icon { padding: 0 8px; min-height: 36px; }
 .home-page .ref { font-size: 24px; }
 
 /* leitura e passagens ocupam toda a altura visível do iPhone */
