@@ -11,6 +11,46 @@
    "credit": "Dicionário Bíblico Veredas. Verbetes resumidos, de caráter introdutório e neutro entre as tradições cristãs."
   },
   {
+   "id": "biblico-en",
+   "name": "Veredas Bible Dictionary",
+   "short": "Bible",
+   "lang": "en",
+   "file": "biblico-en.json",
+   "count": 1137,
+   "license": "Original text by Veredas",
+   "credit": "Veredas Bible Dictionary. Short introductory entries, neutral among the Christian traditions. Translated from the Portuguese original."
+  },
+  {
+   "id": "biblico-es",
+   "name": "Diccionario Bíblico Veredas",
+   "short": "Bíblico",
+   "lang": "es",
+   "file": "biblico-es.json",
+   "count": 1137,
+   "license": "Texto original de Veredas",
+   "credit": "Diccionario Bíblico Veredas. Artículos breves, introductorios y neutrales entre las tradiciones cristianas. Traducido del original en portugués."
+  },
+  {
+   "id": "biblico-fr",
+   "name": "Dictionnaire biblique Veredas",
+   "short": "Biblique",
+   "lang": "fr",
+   "file": "biblico-fr.json",
+   "count": 1137,
+   "license": "Texte original de Veredas",
+   "credit": "Dictionnaire biblique Veredas. Articles brefs et introductifs, neutres entre les traditions chrétiennes. Traduit de l'original portugais."
+  },
+  {
+   "id": "biblico-de",
+   "name": "Veredas-Bibellexikon",
+   "short": "Bibel",
+   "lang": "de",
+   "file": "biblico-de.json",
+   "count": 1137,
+   "license": "Originaltext von Veredas",
+   "credit": "Veredas-Bibellexikon. Kurze, einführende Artikel, neutral zwischen den christlichen Traditionen. Aus dem portugiesischen Original übersetzt."
+  },
+  {
    "id": "figueiredo",
    "name": "Dicionário de Cândido de Figueiredo",
    "short": "Figueiredo",

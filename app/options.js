@@ -502,6 +502,8 @@ async function renderDict() {
   box.replaceChildren();
   const all = await Dict.list();
   if (!all.length) { box.append(el("p", "hint", I18N.t("options.dictNone"))); return; }
+  const mine = d => String(d.lang || "").slice(0, 2).toLowerCase() === I18N.lang;
+  all.sort((a, b) => mine(b) - mine(a));          // os dicionários do idioma da tela vêm primeiro
   for (const d of all) {
     const row = el("div", "offrow dictrow");
     const name = el("div", "offname", d.name);
@@ -513,7 +515,7 @@ async function renderDict() {
     cb.onchange = async () => { await Dict.setEnabled(d.id, cb.checked); renderDict(); };
     on.append(cb, " ", el("span", "", I18N.t("options.dictActive")));
     const def = document.createElement("label"); def.className = "inl";
-    const rb = document.createElement("input"); rb.type = "radio"; rb.name = "dictdef"; rb.checked = d.isDefault;
+    const rb = document.createElement("input"); rb.type = "radio"; rb.name = "dictdef-" + String(d.lang || "pt").slice(0, 2).toLowerCase(); rb.checked = d.isDefault;
     rb.onchange = async () => { await Dict.setDefault(d.id); renderDict(); };
     def.append(rb, " ", el("span", "", I18N.t("options.dictDefault")));
     ctl.append(on, def);

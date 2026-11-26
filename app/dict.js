@@ -14,7 +14,7 @@ const Dict = (() => {
     { id: "verdana", stack: 'Verdana, Tahoma, "DejaVu Sans", sans-serif' }
   ];
   let fontId = "palatino";
-  let prefs = { def: "biblico", off: {}, on: {} }, meta = {}, builtin = [];
+  let prefs = { def: "biblico", off: {}, on: {}, defs: {} }, meta = {}, builtin = [];
   let root = () => null, langOf = () => "pt", notify = () => {}, mode = false, card = null, btn = null, attached = false;
   const idx = {};                                   // cache: id -> índice carregado (ou, nos fragmentados, id|letra)
   const l2 = s => String(s || "pt").slice(0, 2).toLowerCase();
@@ -115,7 +115,7 @@ const Dict = (() => {
   const ready = (async () => {
     try {
       const r = await chrome.storage.local.get([PK, MK, ON, FK]);
-      if (r[PK] && typeof r[PK] === "object") prefs = { def: r[PK].def || "biblico", off: r[PK].off || {}, on: r[PK].on || {} };
+      if (r[PK] && typeof r[PK] === "object") prefs = { def: r[PK].def || "biblico", off: r[PK].off || {}, on: r[PK].on || {}, defs: r[PK].defs || {} };
       if (r[MK] && typeof r[MK] === "object") meta = r[MK];
       mode = !!r[ON];
       if (FONTS.some(f => f.id === r[FK])) fontId = r[FK];
@@ -130,11 +130,13 @@ const Dict = (() => {
   async function list() {
     await ready;
     const all = [...builtin, ...Object.keys(meta).map(id => ({ id, ...meta[id], builtin: false }))];
-    const def = all.some(d => d.id === prefs.def) ? prefs.def : (all[0] && all[0].id);
+    // o dicionário padrão é um por idioma do texto (prefs.defs); prefs.def é a escolha antiga, que vale para o idioma dela
+    const pick = L => { const mine = all.filter(d => l2(d.lang) === L); const c = [prefs.defs[L], prefs.def].find(id => id && mine.some(d => d.id === id)); return c || (mine[0] && mine[0].id); };
+    const defs = {}; all.forEach(d => { const L = l2(d.lang); if (!(L in defs)) defs[L] = pick(L); });
     // "off": true no dicts/index.json = vem desligado até a pessoa ligar (ex.: Figueiredo na grafia de 1913)
-    return all.map(d => ({ ...d, enabled: prefs.off[d.id] ? false : (d.off ? !!prefs.on[d.id] : true), isDefault: d.id === def }));
+    return all.map(d => ({ ...d, enabled: prefs.off[d.id] ? false : (d.off ? !!prefs.on[d.id] : true), isDefault: defs[l2(d.lang)] === d.id }));
   }
-  async function setDefault(id) { await ready; prefs.def = id; delete prefs.off[id]; prefs.on[id] = true; await savePrefs(); }
+  async function setDefault(id) { await ready; const d = (await list()).find(x => x.id === id); prefs.defs[d ? l2(d.lang) : "pt"] = id; delete prefs.off[id]; prefs.on[id] = true; await savePrefs(); }
   async function setEnabled(id, on) { await ready; if (on) { delete prefs.off[id]; prefs.on[id] = true; } else { prefs.off[id] = true; delete prefs.on[id]; } await savePrefs(); }
   async function importText(text) {
     await ready;
@@ -152,6 +154,7 @@ const Dict = (() => {
     await ready;
     if (!meta[id]) return;
     delete meta[id]; delete idx[id]; delete prefs.off[id];
+    Object.keys(prefs.defs).forEach(L => { if (prefs.defs[L] === id) delete prefs.defs[L]; });
     await chrome.storage.local.remove("dict_" + id);
     await chrome.storage.local.set({ [MK]: meta });
     if (prefs.def === id) { prefs.def = "biblico"; }
