@@ -16,9 +16,20 @@
    "short": "Figueiredo",
    "lang": "pt",
    "shards": "figueiredo/{k}.json",
+   "count": 111133,
+   "license": "domínio público",
+   "credit": "Cândido de Figueiredo, Novo Dicionário da Língua Portuguesa, 2ª ed. 1913 (Projeto Gutenberg nº 31552). Grafia atualizada (Entrelinhas/Veredas) (Acordo de 1990, uso brasileiro); definições e etimologias como no original. A forma antiga de cada verbete continua sendo encontrada."
+  },
+  {
+   "id": "figueiredo-1913",
+   "name": "Dicionário de Cândido de Figueiredo — grafia original de 1913",
+   "short": "Figueiredo 1913",
+   "lang": "pt",
+   "shards": "figueiredo-1913/{k}.json",
    "count": 124529,
    "license": "domínio público",
-   "credit": "Cândido de Figueiredo, Novo Dicionário da Língua Portuguesa (Projeto Gutenberg nº 31552). Ortografia da época."
+   "off": true,
+   "credit": "Cândido de Figueiredo, Novo Dicionário da Língua Portuguesa, 2ª ed. 1913 (Projeto Gutenberg nº 31552), na ortografia da época."
   }
  ]
 }

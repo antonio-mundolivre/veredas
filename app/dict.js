@@ -14,7 +14,7 @@ const Dict = (() => {
     { id: "verdana", stack: 'Verdana, Tahoma, "DejaVu Sans", sans-serif' }
   ];
   let fontId = "palatino";
-  let prefs = { def: "biblico", off: {} }, meta = {}, builtin = [];
+  let prefs = { def: "biblico", off: {}, on: {} }, meta = {}, builtin = [];
   let root = () => null, langOf = () => "pt", notify = () => {}, mode = false, card = null, btn = null, attached = false;
   const idx = {};                                   // cache: id -> índice carregado (ou, nos fragmentados, id|letra)
   const l2 = s => String(s || "pt").slice(0, 2).toLowerCase();
@@ -115,7 +115,7 @@ const Dict = (() => {
   const ready = (async () => {
     try {
       const r = await chrome.storage.local.get([PK, MK, ON, FK]);
-      if (r[PK] && typeof r[PK] === "object") prefs = { def: r[PK].def || "biblico", off: r[PK].off || {} };
+      if (r[PK] && typeof r[PK] === "object") prefs = { def: r[PK].def || "biblico", off: r[PK].off || {}, on: r[PK].on || {} };
       if (r[MK] && typeof r[MK] === "object") meta = r[MK];
       mode = !!r[ON];
       if (FONTS.some(f => f.id === r[FK])) fontId = r[FK];
@@ -131,10 +131,11 @@ const Dict = (() => {
     await ready;
     const all = [...builtin, ...Object.keys(meta).map(id => ({ id, ...meta[id], builtin: false }))];
     const def = all.some(d => d.id === prefs.def) ? prefs.def : (all[0] && all[0].id);
-    return all.map(d => ({ ...d, enabled: !prefs.off[d.id], isDefault: d.id === def }));
+    // "off": true no dicts/index.json = vem desligado até a pessoa ligar (ex.: Figueiredo na grafia de 1913)
+    return all.map(d => ({ ...d, enabled: prefs.off[d.id] ? false : (d.off ? !!prefs.on[d.id] : true), isDefault: d.id === def }));
   }
-  async function setDefault(id) { await ready; prefs.def = id; delete prefs.off[id]; await savePrefs(); }
-  async function setEnabled(id, on) { await ready; if (on) delete prefs.off[id]; else prefs.off[id] = true; await savePrefs(); }
+  async function setDefault(id) { await ready; prefs.def = id; delete prefs.off[id]; prefs.on[id] = true; await savePrefs(); }
+  async function setEnabled(id, on) { await ready; if (on) { delete prefs.off[id]; prefs.on[id] = true; } else { prefs.off[id] = true; delete prefs.on[id]; } await savePrefs(); }
   async function importText(text) {
     await ready;
     let j; try { j = JSON.parse(text); } catch (e) { throw new Error(T("dict.badJson")); }
