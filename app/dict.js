@@ -41,6 +41,12 @@ const Dict = (() => {
   };
   function forms(word, lang) {
     const w = strip(word), rules = RULES[l2(lang)] || RULES.pt, out = [w], seen = new Set(out);
+    // elisão e clíticos com apóstrofo (fr: l’Éternel, d’Adam, qu’il; de: hört’s; pt: d’água): a palavra de verdade é cada pedaço;
+    // os pedaços entram logo depois da forma inteira, o mais comprido primeiro
+    if (/[’'`]/.test(String(word))) {
+      String(word).split(/[’'`]+/).map(strip).filter(p => p.length > 1).sort((a, b) => b.length - a.length)
+        .forEach(p => { if (!seen.has(p)) { seen.add(p); out.push(p); } });
+    }
     const step = k => { for (const [suf, rep] of rules) if (k.endsWith(suf) && k.length - suf.length >= 2) { const c = k.slice(0, k.length - suf.length) + rep; if (!seen.has(c)) { seen.add(c); out.push(c); } } };
     const base = out.slice(); base.forEach(step);                // 1ª rodada
     out.slice(1, 12).forEach(step);                              // 2ª rodada (plural + feminino, p.ex.)
