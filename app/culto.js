@@ -669,8 +669,31 @@ function blockFor(it, d) {
   return { ref: itemRef(it), ver: version.short, verses };
 }
 function openExternal(href) {
-  const w = window.open(href, "_blank", "noopener");
-  if (!w) { location.href = href; }   // pop-up bloqueado (iPhone): abre na própria página
+  // sem "noopener" no window.open: com ele o navegador devolve null mesmo abrindo a aba, e a página abria duas vezes
+  let w = null;
+  try { w = window.open(href, "_blank"); } catch (e) { w = null; }
+  if (w) { try { w.opener = null; } catch (e) {} }
+  else location.href = href;   // pop-up bloqueado (iPhone): abre na própria página
+}
+const isMobile = () => /Android|iP(hone|ad|od)/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+// WhatsApp: no celular abre o app direto (whatsapp://); a página do WhatsApp (wa.me) só entra se o app não abrir,
+// isto é, se a página continuar na frente depois de alguns segundos. No computador vai direto para wa.me (WhatsApp Web/Desktop).
+function openWhatsApp(text) {
+  const web = Share.waLink(text);
+  if (!isMobile()) { openExternal(web); return; }
+  // o app abriu = a página foi para segundo plano. Um aviso do navegador ("Abrir no WhatsApp?" ou "endereço inválido")
+  // só tira o foco: espera ele fechar e decide depois.
+  let left = false, dialog = false, timer = 0;
+  const t0 = Date.now();
+  const done = () => { clearTimeout(timer); document.removeEventListener("visibilitychange", onVis); window.removeEventListener("pagehide", onHide); window.removeEventListener("blur", onBlur); window.removeEventListener("focus", onFocus); };
+  const fallback = () => { done(); if (!left && document.visibilityState === "visible" && Date.now() - t0 < 60000) location.href = web; };
+  const onHide = () => { left = true; done(); };
+  const onVis = () => { if (document.visibilityState === "hidden") onHide(); };
+  const onBlur = () => { dialog = true; clearTimeout(timer); };
+  const onFocus = () => { if (dialog) { dialog = false; clearTimeout(timer); timer = setTimeout(fallback, 1500); } };
+  document.addEventListener("visibilitychange", onVis); window.addEventListener("pagehide", onHide); window.addEventListener("blur", onBlur); window.addEventListener("focus", onFocus);
+  location.href = "whatsapp://send?text=" + encodeURIComponent(text);
+  timer = setTimeout(() => { if (!dialog) fallback(); }, 2500);
 }
 async function shareItems(kind) {
   if (pickMode) closePicker();
@@ -685,7 +708,7 @@ async function shareItems(kind) {
   const link = Share.url(Share.encode(snapshot(), version.id));
   const r = Share.render(kind, blocks, link, kind === "wa" ? 5500 : 3500);
   if (r.truncated) msg(t("share.tooLong")); else msg("");
-  if (kind === "wa") openExternal(Share.waLink(r.text));
+  if (kind === "wa") openWhatsApp(r.text);
   else showMailPanel(Share.subject(blocks), r.text, Share.html(blocks, link));
 }
 
