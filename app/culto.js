@@ -706,34 +706,79 @@ async function shareItems(kind) {
     try { datas = await Promise.all(items.map(it => ensureData(it, version))); } catch (e) { msg(String(e.message || e), true); return; }
   }
   const blocks = items.map((it, k) => blockFor(it, datas[k]));
-  if (kind === "social") { copySocial(Share.social(blocks)); return; }
   const link = Share.url(Share.encode(snapshot(), version.id));
+  if (kind === "social") { showSocialPanel(blocks, link); return; }
   const r = Share.render(kind, blocks, link, kind === "wa" ? 5500 : 3500);
   if (r.truncated) msg(t("share.tooLong")); else msg("");
   if (kind === "wa") openWhatsApp(r.text);
   else showMailPanel(Share.subject(blocks), r.text, Share.html(blocks, link));
 }
 
-// redes sociais: texto limpo (sem *negrito* do WhatsApp, que Instagram, Facebook e X não entendem), sem link,
-// pronto para colar na postagem. Se a cópia falhar, o texto aparece selecionado num quadro para copiar à mão.
-function copySocial(text) {
-  const n = [...text].length;
+// redes sociais: Facebook e Instagram não aceitam texto formatado colado, então o "visual do e-mail" vai como imagem
+// (socialimg.js), com um QR code que abre as passagens no Veredas; o link vai na legenda (no Facebook ele fica clicável).
+// As imagens são preparadas quando o quadro abre: o toque em Compartilhar precisa chamar o navigator.share na hora.
+function copyText(text, okMsg) {   // copia texto; se o navegador não deixar, mostra o texto selecionado para copiar à mão
   const done = ok => {
-    if (ok) { if (panelMode === "social") closePanel(); msg(t("culto.social.copied", { n }) + (n > 280 ? " " + t("culto.social.long") : "")); return; }
-    panelMode = "social";
-    const p = $("#panel"); p.hidden = false; p.replaceChildren();
-    p.append(el_("h5", t("culto.shareSocial.aria")));
-    const ta = document.createElement("textarea"); ta.className = "socialtext"; ta.readOnly = true; ta.value = text; ta.rows = 8;
-    const row = document.createElement("div"); row.className = "prow";
-    row.append(btn(t("culto.social.close"), "", closePanel));
-    p.append(ta, row); Pager.layout();
-    ta.focus(); ta.select();
+    if (ok) { msg(okMsg); return; }
+    const p = $("#panel"); let ta = p.querySelector(".socialtext");
+    if (!ta) { ta = document.createElement("textarea"); ta.className = "socialtext"; ta.readOnly = true; ta.rows = 7; p.insertBefore(ta, p.querySelector(".prow")); }
+    ta.value = text; Pager.layout(); ta.focus(); ta.select();
     msg(t("culto.mail.copyFail"), true);
   };
   if (navigator.clipboard && navigator.clipboard.writeText) {
     try { navigator.clipboard.writeText(text).then(() => done(true), () => legacyCopy(text, done)); return; } catch (e) {}
   }
   legacyCopy(text, done);
+}
+let socialRun = 0;
+function showSocialPanel(blocks, link) {
+  if (panelMode === "social") { closePanel(); return; }
+  panelMode = "social";
+  const run = ++socialRun;
+  const p = $("#panel"); p.hidden = false; p.replaceChildren();
+  p.append(el_("h5", t("culto.social.title")));
+  const shots = document.createElement("div"); shots.className = "socialshots"; shots.append(el_("span", t("culto.social.preparing")));
+  const row = document.createElement("div"); row.className = "prow";
+  const hint = el_("p", t("culto.social.hint")); hint.className = "socialhint";
+  p.append(row, shots, hint); Pager.layout();
+  const reveal = () => { try { p.scrollIntoView({ block: "nearest" }); } catch (e) {} };   // a área de cima tem altura limitada e rola
+  const refs = blocks.map(b => b.ref).join(" · ") + (blocks[0] ? " (" + blocks[0].ver + ")" : "");
+  const caption = "📖 " + refs + "\n\n🔗 " + t("share.open") + ": " + link;
+  const fullText = Share.social(blocks) + "\n\n🔗 " + t("share.open") + ": " + link;
+  const textBtn = () => btn(t("culto.social.text"), "", () => { const n = [...fullText].length; copyText(fullText, t("culto.social.copied", { n }) + (n > 280 ? " " + t("culto.social.long") : "")); });
+  const capBtn = () => btn(t("culto.social.caption"), "", () => copyText(caption, t("culto.social.captionCopied")));
+  SocialImg.render(blocks, link).then(blobs => {
+    if (run !== socialRun || panelMode !== "social") return;
+    const n = blobs.length;
+    const files = blobs.map((b, k) => new File([b], `veredas-passagens${n > 1 ? "-" + (k + 1) : ""}.png`, { type: "image/png" }));
+    const urls = blobs.map(b => URL.createObjectURL(b));
+    shots.replaceChildren(...urls.map((u, k) => { const im = document.createElement("img"); im.src = u; im.alt = t("culto.social.title") + " " + (k + 1); return im; }));
+    const canShareFiles = !!(navigator.canShare && (() => { try { return navigator.canShare({ files }); } catch (e) { return false; } })());
+    const canCopyImg = !!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem);
+    const mobile = isMobile();
+    const btns = [];
+    if (canShareFiles) btns.push(btn(t("culto.social.share", { n }), "primary", () => {
+      // a legenda com o link vai para a área de transferência: Instagram e Facebook costumam descartar o texto do compartilhamento
+      try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(caption).catch(() => {}); } catch (e) {}
+      navigator.share({ files, text: caption, title: "Veredas" }).then(() => msg(t("culto.social.captionCopied"))).catch(e => { if (e && e.name !== "AbortError") msg(String(e.message || e), true); });
+    }));
+    if (canCopyImg && !mobile) btns.push(btn(t("culto.social.copyImg", { n }), canShareFiles ? "" : "primary", () => {
+      try {
+        navigator.clipboard.write([new ClipboardItem({ "image/png": blobs[0] })]).then(() => msg(t("culto.social.imgCopied")), () => msg(t("culto.mail.copyFail"), true));
+      } catch (e) { msg(t("culto.mail.copyFail"), true); }
+    }));
+    if (!mobile || !canShareFiles) btns.push(btn(t("culto.social.download", { n }), btns.length ? "" : "primary", () => {
+      urls.forEach((u, k) => { const a = document.createElement("a"); a.href = u; a.download = files[k].name; document.body.append(a); a.click(); a.remove(); });
+      msg(t("culto.social.saved", { n }));
+    }));
+    btns.push(capBtn(), textBtn(), btn(t("culto.social.close"), "", closePanel));
+    row.replaceChildren(...btns);
+    Pager.layout(); reveal();
+  }).catch(e => {
+    if (run !== socialRun) return;
+    shots.replaceChildren(el_("span", String(e && e.message || e)));
+    row.replaceChildren(capBtn(), textBtn(), btn(t("culto.social.close"), "", closePanel)); Pager.layout();
+  });
 }
 
 // e-mail: o texto formatado (HTML) vai para a área de transferência e a pessoa cola no corpo do e-mail.

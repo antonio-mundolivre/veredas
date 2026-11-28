@@ -82,6 +82,9 @@ body.tall .finder { max-height: 74vh; }
 .panel { border: 1px solid var(--rule); border-radius: 10px; background: var(--bar); padding: 10px 12px; margin: 8px 0; font: 14px system-ui, sans-serif; }
 .panel[hidden] { display: none; }
 .panel .prow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.panel .socialshots { display: flex; gap: 8px; overflow-x: auto; margin: 10px 0 0; min-height: 40px; align-items: center; color: var(--muted); font: 14px system-ui, sans-serif; }
+.panel .socialshots img { height: 112px; width: auto; border-radius: 6px; border: 1px solid var(--rule); flex: 0 0 auto; }
+.panel .socialhint { margin: 10px 0 0; color: var(--muted); font: 13px/1.45 system-ui, sans-serif; }
 .panel .socialtext { display: block; width: 100%; box-sizing: border-box; margin: 0 0 8px; font: 15px/1.5 system-ui, sans-serif; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--bg); color: var(--fg); resize: vertical; }
 .panel input[type=text] { flex: 1; min-width: 180px; font: 15px system-ui, sans-serif; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--bg); color: var(--fg); }
 .panel h5 { font: 700 11px system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 10px 0 4px; }
