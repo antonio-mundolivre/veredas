@@ -82,6 +82,7 @@ body.tall .finder { max-height: 74vh; }
 .panel { border: 1px solid var(--rule); border-radius: 10px; background: var(--bar); padding: 10px 12px; margin: 8px 0; font: 14px system-ui, sans-serif; }
 .panel[hidden] { display: none; }
 .panel .prow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.panel .socialtext { display: block; width: 100%; box-sizing: border-box; margin: 0 0 8px; font: 15px/1.5 system-ui, sans-serif; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--bg); color: var(--fg); resize: vertical; }
 .panel input[type=text] { flex: 1; min-width: 180px; font: 15px system-ui, sans-serif; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--bg); color: var(--fg); }
 .panel h5 { font: 700 11px system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 10px 0 4px; }
 .panel h5:first-child { margin-top: 0; }

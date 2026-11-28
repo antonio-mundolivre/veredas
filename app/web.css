@@ -41,6 +41,11 @@ html.web body:not(.home-page) { height: 100dvh; }
   .pagebar #prev, .pagebar #next { flex: 1 1 0; padding: 8px 6px; font-size: 13px; }
   .pagebar .narrbtn, .pagebar .dictbtn { width: 40px; height: 36px; padding: 0; }
 }
+/* iPhone SE (1ª geração, 320 px): os 7 botões das Passagens numa linha só */
+@media (max-width: 345px) {
+  .qline { column-gap: 5px; }
+  .qline .ib { width: 38px; }
+}
 
 /* Configurações no iPhone: a barra fixa de baixo respeita o canto arredondado e o indicador inicial */
 html.web { --sab: env(safe-area-inset-bottom, 0px); --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px); }

@@ -31,6 +31,7 @@ const ICONS = {
   folder: ["M3 19V6a1 1 0 0 1 1-1h5l2 2h7a1 1 0 0 1 1 1v2", "M3 19l2.5-8.5a1 1 0 0 1 1-.7H21l-2.6 8.5a1 1 0 0 1-1 .7H3z"],
   mail:   ["M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z", "M22 6l-10 7L2 6"],
   wa:     ["M3 21l1.7-5A9 9 0 1 1 8 19.3z", "M9 9.2c0 3 2.8 5.8 5.8 5.8l1.2-1.3-2.100-1.100-.9.900c-1-.4-1.900-1.300-2.300-2.300l.9-.9-1.100-2.100z"],
+  copy:   ["M11 9h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z", "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"],
   grid:   ["M3 3h7v7H3z", "M14 3h7v7h-7z", "M3 14h7v7H3z", "M14 14h7v7h-7z"]
 };
 function icon(name, size = 20) {
@@ -705,6 +706,7 @@ async function shareItems(kind) {
     try { datas = await Promise.all(items.map(it => ensureData(it, version))); } catch (e) { msg(String(e.message || e), true); return; }
   }
   const blocks = items.map((it, k) => blockFor(it, datas[k]));
+  if (kind === "social") { copySocial(Share.social(blocks)); return; }
   const link = Share.url(Share.encode(snapshot(), version.id));
   const r = Share.render(kind, blocks, link, kind === "wa" ? 5500 : 3500);
   if (r.truncated) msg(t("share.tooLong")); else msg("");
@@ -712,13 +714,35 @@ async function shareItems(kind) {
   else showMailPanel(Share.subject(blocks), r.text, Share.html(blocks, link));
 }
 
+// redes sociais: texto limpo (sem *negrito* do WhatsApp, que Instagram, Facebook e X não entendem), sem link,
+// pronto para colar na postagem. Se a cópia falhar, o texto aparece selecionado num quadro para copiar à mão.
+function copySocial(text) {
+  const n = [...text].length;
+  const done = ok => {
+    if (ok) { if (panelMode === "social") closePanel(); msg(t("culto.social.copied", { n }) + (n > 280 ? " " + t("culto.social.long") : "")); return; }
+    panelMode = "social";
+    const p = $("#panel"); p.hidden = false; p.replaceChildren();
+    p.append(el_("h5", t("culto.shareSocial.aria")));
+    const ta = document.createElement("textarea"); ta.className = "socialtext"; ta.readOnly = true; ta.value = text; ta.rows = 8;
+    const row = document.createElement("div"); row.className = "prow";
+    row.append(btn(t("culto.social.close"), "", closePanel));
+    p.append(ta, row); Pager.layout();
+    ta.focus(); ta.select();
+    msg(t("culto.mail.copyFail"), true);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try { navigator.clipboard.writeText(text).then(() => done(true), () => legacyCopy(text, done)); return; } catch (e) {}
+  }
+  legacyCopy(text, done);
+}
+
 // e-mail: o texto formatado (HTML) vai para a área de transferência e a pessoa cola no corpo do e-mail.
 // Pelo link do e-mail só dá para mandar texto puro, e o Gmail o amassava num parágrafo só.
 function legacyCopy(text, done) {
   const ta = document.createElement("textarea"); ta.value = text; ta.style.cssText = "position:fixed;left:0;top:0;opacity:0";
   document.body.append(ta); ta.focus(); ta.select();
-  try { document.execCommand("copy"); done(true); } catch (e) { done(false); }
-  ta.remove();
+  let ok = false; try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  ta.remove(); done(!!ok);
 }
 function richCopy(html, plain) {   // devolve uma Promise<boolean>; precisa ser chamada dentro do toque do usuário
   return new Promise(ok => {
@@ -879,7 +903,7 @@ function reloadAll() {
   };
   alignRefresh = Pager.buildAlign($("#alignGroup"), () => prefs.align, v => { prefs.align = v; applyPrefs(); savePrefs(); });
   alignRefresh();
-  [["booksBtn", "book"], ["newBtn", "plus"], ["saveBtn", "save"], ["mailBtn", "mail"], ["waBtn", "wa"], ["readBtn", "folder"]].forEach(([id, ic]) => { $("#" + id).replaceChildren(icon(ic)); });
+  [["booksBtn", "book"], ["newBtn", "plus"], ["saveBtn", "save"], ["mailBtn", "mail"], ["waBtn", "wa"], ["socialBtn", "copy"], ["readBtn", "folder"]].forEach(([id, ic]) => { $("#" + id).replaceChildren(icon(ic)); });
   $("#booksBtn").onclick = () => (pickMode === "new" ? closePicker() : openPicker("new", "book"));
   document.addEventListener("keydown", e => { if (e.key === "Escape" && pickMode) closePicker(); });
   new ResizeObserver(() => { if (pickMode) placePicker(); }).observe($(".finder"));
@@ -889,6 +913,7 @@ function reloadAll() {
   $("#readBtn").onclick = openReadPanel;
   $("#mailBtn").onclick = () => shareItems("mail");
   $("#waBtn").onclick = () => shareItems("wa");
+  $("#socialBtn").onclick = () => shareItems("social");
   $("#q").addEventListener("keydown", e => {
     if (e.key === "Enter") submitQuery();
     if (e.key === "Escape") { $("#q").value = ""; msg(""); }

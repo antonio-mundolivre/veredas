@@ -78,6 +78,14 @@ const Share = (() => {
     if (listed.length) out += `\n${T("share.also")} ${listed.join(" · ")}\n`;
     return { text: head + out + foot, truncated: cut };
   }
+  // redes sociais: um versículo vai entre aspas; vários vão num parágrafo com os números pequenos; a referência fecha o bloco
+  function social(blocks) {
+    return blocks.map(b => {
+      const vs = b.verses.filter(v => v.text && v.text.trim());
+      const body = vs.length === 1 ? T("share.quote", { t: vs[0].text.trim() }) : vs.map(v => `${sup(v.n)} ${v.text.trim()}`).join(" ");
+      return `${body}\n— ${b.ref} (${b.ver})`;
+    }).join("\n\n");
+  }
   // e-mail formatado (HTML com estilos na própria tag, o que os programas de e-mail aceitam): copiado para a área de transferência
   const esc = x => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   // Sem tabelas: o Gmail do iPhone e outros aplicativos simplificam o que se cola; assim o texto fica em títulos e parágrafos legíveis
@@ -101,5 +109,5 @@ const Share = (() => {
   const waLink = text => "https://wa.me/?text=" + encodeURIComponent(text);
   const mailLink = (subj, text) => "mailto:?subject=" + encodeURIComponent(subj) + "&body=" + encodeURIComponent(text);
 
-  return { encode, decode, url, fromLocation, render, html, subject, waLink, mailLink, WEB_BASE };
+  return { encode, decode, url, fromLocation, render, social, html, subject, waLink, mailLink, WEB_BASE };
 })();
